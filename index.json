@@ -1,0 +1,1285 @@
+{
+  "movies": [
+    {
+      "id": 1,
+      "title": "Uncharted",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Uncharted%20trailer",
+      "image": ""
+    },
+    {
+      "id": 2,
+      "title": "Gone in 60 Seconds",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Gone%20in%2060%20Seconds%20trailer",
+      "image": ""
+    },
+    {
+      "id": 3,
+      "title": "Baby Driver",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Baby%20Driver%20trailer",
+      "image": ""
+    },
+    {
+      "id": 4,
+      "title": "Spider-Man",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Spider-Man%20trailer",
+      "image": ""
+    },
+    {
+      "id": 5,
+      "title": "Jurassic Park",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Jurassic%20Park%20trailer",
+      "image": ""
+    },
+    {
+      "id": 6,
+      "title": "Gran Turismo",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Gran%20Turismo%20trailer",
+      "image": ""
+    },
+    {
+      "id": 7,
+      "title": "Ant-Man",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Ant-Man%20trailer",
+      "image": ""
+    },
+    {
+      "id": 8,
+      "title": "Thor",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Thor%20trailer",
+      "image": ""
+    },
+    {
+      "id": 9,
+      "title": "Top Gun",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Top%20Gun%20trailer",
+      "image": ""
+    },
+    {
+      "id": 10,
+      "title": "War Dogs",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=War%20Dogs%20trailer",
+      "image": ""
+    },
+    {
+      "id": 11,
+      "title": "The Raid 1\u20132",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Raid%201%E2%80%932%20trailer",
+      "image": ""
+    },
+    {
+      "id": 12,
+      "title": "Ong-Bak",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Ong-Bak%20trailer",
+      "image": ""
+    },
+    {
+      "id": 13,
+      "title": "The Dark Knight",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Dark%20Knight%20trailer",
+      "image": ""
+    },
+    {
+      "id": 14,
+      "title": "Jaws",
+      "genre": "ACTION",
+      "trailer": "https://www.youtube.com/results?search_query=Jaws%20trailer",
+      "image": ""
+    },
+    {
+      "id": 15,
+      "title": "Pulp Fiction",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=Pulp%20Fiction%20trailer",
+      "image": ""
+    },
+    {
+      "id": 16,
+      "title": "Back to the Future",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=Back%20to%20the%20Future%20trailer",
+      "image": ""
+    },
+    {
+      "id": 17,
+      "title": "The Goonies",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Goonies%20trailer",
+      "image": ""
+    },
+    {
+      "id": 18,
+      "title": "Gremlins",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=Gremlins%20trailer",
+      "image": ""
+    },
+    {
+      "id": 19,
+      "title": "The Green Knight",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Green%20Knight%20trailer",
+      "image": ""
+    },
+    {
+      "id": 20,
+      "title": "Hard Ticket to Hawaii",
+      "genre": "ADVENTURE",
+      "trailer": "https://www.youtube.com/results?search_query=Hard%20Ticket%20to%20Hawaii%20trailer",
+      "image": ""
+    },
+    {
+      "id": 21,
+      "title": "When You Finish Saving the World",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=When%20You%20Finish%20Saving%20the%20World%20trailer",
+      "image": ""
+    },
+    {
+      "id": 22,
+      "title": "Robin Hood: Men in Tights",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Robin%20Hood%3A%20Men%20in%20Tights%20trailer",
+      "image": ""
+    },
+    {
+      "id": 23,
+      "title": "Ferris Bueller's Day Off",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Ferris%20Bueller%27s%20Day%20Off%20trailer",
+      "image": ""
+    },
+    {
+      "id": 24,
+      "title": "Superbad",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Superbad%20trailer",
+      "image": ""
+    },
+    {
+      "id": 25,
+      "title": "Drama",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Drama%20trailer",
+      "image": ""
+    },
+    {
+      "id": 26,
+      "title": "Monty Python",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Monty%20Python%20trailer",
+      "image": ""
+    },
+    {
+      "id": 27,
+      "title": "Bill & Ted",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Bill%20%26%20Ted%20trailer",
+      "image": ""
+    },
+    {
+      "id": 28,
+      "title": "Wayne's World",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Wayne%27s%20World%20trailer",
+      "image": ""
+    },
+    {
+      "id": 29,
+      "title": "Tenacious D in The Pick of Destiny",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Tenacious%20D%20in%20The%20Pick%20of%20Destiny%20trailer",
+      "image": ""
+    },
+    {
+      "id": 30,
+      "title": "The Princess Bride",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Princess%20Bride%20trailer",
+      "image": ""
+    },
+    {
+      "id": 31,
+      "title": "Napoleon Dynamite",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Napoleon%20Dynamite%20trailer",
+      "image": ""
+    },
+    {
+      "id": 32,
+      "title": "The Breakfast Club",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Breakfast%20Club%20trailer",
+      "image": ""
+    },
+    {
+      "id": 33,
+      "title": "21 Jump Street",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=21%20Jump%20Street%20trailer",
+      "image": ""
+    },
+    {
+      "id": 34,
+      "title": "Dazed and Confused",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dazed%20and%20Confused%20trailer",
+      "image": ""
+    },
+    {
+      "id": 35,
+      "title": "School of Rock",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=School%20of%20Rock%20trailer",
+      "image": ""
+    },
+    {
+      "id": 36,
+      "title": "Nacho Libre",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Nacho%20Libre%20trailer",
+      "image": ""
+    },
+    {
+      "id": 37,
+      "title": "Deadpool",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Deadpool%20trailer",
+      "image": ""
+    },
+    {
+      "id": 38,
+      "title": "Mac and Devin Go to High School",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Mac%20and%20Devin%20Go%20to%20High%20School%20trailer",
+      "image": ""
+    },
+    {
+      "id": 39,
+      "title": "Pineapple Express",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Pineapple%20Express%20trailer",
+      "image": ""
+    },
+    {
+      "id": 40,
+      "title": "Scary Movie franchise",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Scary%20Movie%20franchise%20trailer",
+      "image": ""
+    },
+    {
+      "id": 41,
+      "title": "Fast Times at Ridgemont High",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Fast%20Times%20at%20Ridgemont%20High%20trailer",
+      "image": ""
+    },
+    {
+      "id": 42,
+      "title": "Friday 1\u20133",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Friday%201%E2%80%933%20trailer",
+      "image": ""
+    },
+    {
+      "id": 43,
+      "title": "Super Troopers",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Super%20Troopers%20trailer",
+      "image": ""
+    },
+    {
+      "id": 44,
+      "title": "The Blart Side of the Mall *(Paul Blart: Mall Cop?)*",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Blart%20Side%20of%20the%20Mall%20trailer",
+      "image": ""
+    },
+    {
+      "id": 45,
+      "title": "Project X",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Project%20X%20trailer",
+      "image": ""
+    },
+    {
+      "id": 46,
+      "title": "Rush Hour 1\u20132",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Rush%20Hour%201%E2%80%932%20trailer",
+      "image": ""
+    },
+    {
+      "id": 47,
+      "title": "Shanghai Noon + Shanghai Knights",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Shanghai%20Noon%20%2B%20Shanghai%20Knights%20trailer",
+      "image": ""
+    },
+    {
+      "id": 48,
+      "title": "Be Kind Rewind",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Be%20Kind%20Rewind%20trailer",
+      "image": ""
+    },
+    {
+      "id": 49,
+      "title": "Hot Rod",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Hot%20Rod%20trailer",
+      "image": ""
+    },
+    {
+      "id": 50,
+      "title": "King of Staten Island",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=King%20of%20Staten%20Island%20trailer",
+      "image": ""
+    },
+    {
+      "id": 51,
+      "title": "Palm Springs",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Palm%20Springs%20trailer",
+      "image": ""
+    },
+    {
+      "id": 52,
+      "title": "Ted",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Ted%20trailer",
+      "image": ""
+    },
+    {
+      "id": 53,
+      "title": "30 Minutes or Less",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=30%20Minutes%20or%20Less%20trailer",
+      "image": ""
+    },
+    {
+      "id": 54,
+      "title": "Talladega Nights",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Talladega%20Nights%20trailer",
+      "image": ""
+    },
+    {
+      "id": 55,
+      "title": "A Knight's Tale",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=A%20Knight%27s%20Tale%20trailer",
+      "image": ""
+    },
+    {
+      "id": 56,
+      "title": "Step Brothers",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Step%20Brothers%20trailer",
+      "image": ""
+    },
+    {
+      "id": 57,
+      "title": "Deathgasm",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Deathgasm%20trailer",
+      "image": ""
+    },
+    {
+      "id": 58,
+      "title": "Dungeons & Dragons: Honor Among Thieves",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dungeons%20%26%20Dragons%3A%20Honor%20Among%20Thieves%20trailer",
+      "image": ""
+    },
+    {
+      "id": 59,
+      "title": "Metal Lords",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Metal%20Lords%20trailer",
+      "image": ""
+    },
+    {
+      "id": 60,
+      "title": "Heavy Trip",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Heavy%20Trip%20trailer",
+      "image": ""
+    },
+    {
+      "id": 61,
+      "title": "The Rocker",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Rocker%20trailer",
+      "image": ""
+    },
+    {
+      "id": 62,
+      "title": "Lords of Chaos",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Lords%20of%20Chaos%20trailer",
+      "image": ""
+    },
+    {
+      "id": 63,
+      "title": "Paint (2023)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Paint%20%282023%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 64,
+      "title": "Tropic Thunder",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Tropic%20Thunder%20trailer",
+      "image": ""
+    },
+    {
+      "id": 65,
+      "title": "Airheads",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Airheads%20trailer",
+      "image": ""
+    },
+    {
+      "id": 66,
+      "title": "Tammy",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Tammy%20trailer",
+      "image": ""
+    },
+    {
+      "id": 67,
+      "title": "Game Over, Man!",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Game%20Over%2C%20Man%21%20trailer",
+      "image": ""
+    },
+    {
+      "id": 68,
+      "title": "Dumb and Dumber",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dumb%20and%20Dumber%20trailer",
+      "image": ""
+    },
+    {
+      "id": 69,
+      "title": "The Interview",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Interview%20trailer",
+      "image": ""
+    },
+    {
+      "id": 70,
+      "title": "Role Models",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Role%20Models%20trailer",
+      "image": ""
+    },
+    {
+      "id": 71,
+      "title": "Borat",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Borat%20trailer",
+      "image": ""
+    },
+    {
+      "id": 72,
+      "title": "Br\u00fcno (2009)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Br%C3%BCno%20%282009%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 73,
+      "title": "Dudley Do-Right",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dudley%20Do-Right%20trailer",
+      "image": ""
+    },
+    {
+      "id": 74,
+      "title": "Ripped (2017)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Ripped%20%282017%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 75,
+      "title": "Anchorman",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Anchorman%20trailer",
+      "image": ""
+    },
+    {
+      "id": 76,
+      "title": "Airplane!",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Airplane%21%20trailer",
+      "image": ""
+    },
+    {
+      "id": 77,
+      "title": "The Truman Show",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Truman%20Show%20trailer",
+      "image": ""
+    },
+    {
+      "id": 78,
+      "title": "Austin Powers",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Austin%20Powers%20trailer",
+      "image": ""
+    },
+    {
+      "id": 79,
+      "title": "Dude, Where's My Car?",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dude%2C%20Where%27s%20My%20Car%3F%20trailer",
+      "image": ""
+    },
+    {
+      "id": 80,
+      "title": "Crazy, Stupid, Love",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Crazy%2C%20Stupid%2C%20Love%20trailer",
+      "image": ""
+    },
+    {
+      "id": 81,
+      "title": "Employee of the Month",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Employee%20of%20the%20Month%20trailer",
+      "image": ""
+    },
+    {
+      "id": 82,
+      "title": "Paul",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Paul%20trailer",
+      "image": ""
+    },
+    {
+      "id": 83,
+      "title": "Walk Hard: The Dewey Cox Story",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Walk%20Hard%3A%20The%20Dewey%20Cox%20Story%20trailer",
+      "image": ""
+    },
+    {
+      "id": 84,
+      "title": "The Big Lebowski",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Big%20Lebowski%20trailer",
+      "image": ""
+    },
+    {
+      "id": 85,
+      "title": "Land of the Lost",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Land%20of%20the%20Lost%20trailer",
+      "image": ""
+    },
+    {
+      "id": 86,
+      "title": "Hot Shots! 1\u20132",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Hot%20Shots%21%201%E2%80%932%20trailer",
+      "image": ""
+    },
+    {
+      "id": 87,
+      "title": "Submarine (2010)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Submarine%20%282010%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 88,
+      "title": "Dave Made a Maze (2017)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Dave%20Made%20a%20Maze%20%282017%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 89,
+      "title": "Toys (1992)",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Toys%20%281992%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 90,
+      "title": "Scouts Guide to the Zombie Apocalypse",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Scouts%20Guide%20to%20the%20Zombie%20Apocalypse%20trailer",
+      "image": ""
+    },
+    {
+      "id": 91,
+      "title": "Mountainhead",
+      "genre": "COMEDY",
+      "trailer": "https://www.youtube.com/results?search_query=Mountainhead%20trailer",
+      "image": ""
+    },
+    {
+      "id": 92,
+      "title": "Mad God",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Mad%20God%20trailer",
+      "image": ""
+    },
+    {
+      "id": 93,
+      "title": "The Shining",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Shining%20trailer",
+      "image": ""
+    },
+    {
+      "id": 94,
+      "title": "Studio 666",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Studio%20666%20trailer",
+      "image": ""
+    },
+    {
+      "id": 95,
+      "title": "Frankenstein's Army",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Frankenstein%27s%20Army%20trailer",
+      "image": ""
+    },
+    {
+      "id": 96,
+      "title": "The Evil Dead",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Evil%20Dead%20trailer",
+      "image": ""
+    },
+    {
+      "id": 97,
+      "title": "Pan's Labyrinth",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Pan%27s%20Labyrinth%20trailer",
+      "image": ""
+    },
+    {
+      "id": 98,
+      "title": "Killer Klowns from Outer Space",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Killer%20Klowns%20from%20Outer%20Space%20trailer",
+      "image": ""
+    },
+    {
+      "id": 99,
+      "title": "Hunger (2009)",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Hunger%20%282009%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 100,
+      "title": "We Are What We Are",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=We%20Are%20What%20We%20Are%20trailer",
+      "image": ""
+    },
+    {
+      "id": 101,
+      "title": "The Silence of the Lambs",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Silence%20of%20the%20Lambs%20trailer",
+      "image": ""
+    },
+    {
+      "id": 102,
+      "title": "Cannibal Holocaust",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Cannibal%20Holocaust%20trailer",
+      "image": ""
+    },
+    {
+      "id": 103,
+      "title": "It",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=It%20trailer",
+      "image": ""
+    },
+    {
+      "id": 104,
+      "title": "Sky Sharks (2020)",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Sky%20Sharks%20%282020%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 105,
+      "title": "Clowns Are White (2022)",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Clowns%20Are%20White%20%282022%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 106,
+      "title": "Other Mommy",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=Other%20Mommy%20trailer",
+      "image": ""
+    },
+    {
+      "id": 107,
+      "title": "The Invite (2026)",
+      "genre": "HORROR",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Invite%20%282026%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 108,
+      "title": "Pitch Perfect",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Pitch%20Perfect%20trailer",
+      "image": ""
+    },
+    {
+      "id": 109,
+      "title": "The Rocky Horror Picture Show",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Rocky%20Horror%20Picture%20Show%20trailer",
+      "image": ""
+    },
+    {
+      "id": 110,
+      "title": "Harry Potter musical *(fan parody?)*",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Harry%20Potter%20musical%20trailer",
+      "image": ""
+    },
+    {
+      "id": 111,
+      "title": "Labyrinth",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Labyrinth%20trailer",
+      "image": ""
+    },
+    {
+      "id": 112,
+      "title": "Yesterday",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Yesterday%20trailer",
+      "image": ""
+    },
+    {
+      "id": 113,
+      "title": "Pink Floyd \u2013 The Wall",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Pink%20Floyd%20%E2%80%93%20The%20Wall%20trailer",
+      "image": ""
+    },
+    {
+      "id": 114,
+      "title": "Sweeney Todd: The Demon Barber of Fleet Street",
+      "genre": "MUSICALS",
+      "trailer": "https://www.youtube.com/results?search_query=Sweeney%20Todd%3A%20The%20Demon%20Barber%20of%20Fleet%20Street%20trailer",
+      "image": ""
+    },
+    {
+      "id": 115,
+      "title": "Frankenweenie",
+      "genre": "MYSTERY",
+      "trailer": "https://www.youtube.com/results?search_query=Frankenweenie%20trailer",
+      "image": ""
+    },
+    {
+      "id": 116,
+      "title": "ParaNorman",
+      "genre": "MYSTERY",
+      "trailer": "https://www.youtube.com/results?search_query=ParaNorman%20trailer",
+      "image": ""
+    },
+    {
+      "id": 117,
+      "title": "High Fidelity",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=High%20Fidelity%20trailer",
+      "image": ""
+    },
+    {
+      "id": 118,
+      "title": "M\u00f6tley Cr\u00fce's The Dirt",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=M%C3%B6tley%20Cr%C3%BCe%27s%20The%20Dirt%20trailer",
+      "image": ""
+    },
+    {
+      "id": 119,
+      "title": "The Greatest Beer Run Ever",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Greatest%20Beer%20Run%20Ever%20trailer",
+      "image": ""
+    },
+    {
+      "id": 120,
+      "title": "My Dinner with Andre",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=My%20Dinner%20with%20Andre%20trailer",
+      "image": ""
+    },
+    {
+      "id": 121,
+      "title": "127 Hours",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=127%20Hours%20trailer",
+      "image": ""
+    },
+    {
+      "id": 122,
+      "title": "Whiplash (2014)",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=Whiplash%20%282014%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 123,
+      "title": "We Are Your Friends",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=We%20Are%20Your%20Friends%20trailer",
+      "image": ""
+    },
+    {
+      "id": 124,
+      "title": "The Guardian (2006)",
+      "genre": "DRAMA",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Guardian%20%282006%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 125,
+      "title": "Spaceman",
+      "genre": "SCIENCE",
+      "trailer": "https://www.youtube.com/results?search_query=Spaceman%20trailer",
+      "image": ""
+    },
+    {
+      "id": 126,
+      "title": "Gravity",
+      "genre": "SCIENCE",
+      "trailer": "https://www.youtube.com/results?search_query=Gravity%20trailer",
+      "image": ""
+    },
+    {
+      "id": 127,
+      "title": "Coherence (2013)",
+      "genre": "SCIENCE",
+      "trailer": "https://www.youtube.com/results?search_query=Coherence%20%282013%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 128,
+      "title": "The Signal",
+      "genre": "SCIENCE",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Signal%20trailer",
+      "image": ""
+    },
+    {
+      "id": 129,
+      "title": "Avatar",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Avatar%20trailer",
+      "image": ""
+    },
+    {
+      "id": 130,
+      "title": "Star Wars",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Star%20Wars%20trailer",
+      "image": ""
+    },
+    {
+      "id": 131,
+      "title": "Lord of the Rings / The Hobbit / The 1978 animated one",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Lord%20of%20the%20Rings%20/%20The%20Hobbit%20/%20The%201978%20animated%20one%20trailer",
+      "image": ""
+    },
+    {
+      "id": 132,
+      "title": "Dune 1\u20132",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Dune%201%E2%80%932%20trailer",
+      "image": ""
+    },
+    {
+      "id": 133,
+      "title": "Alita: Battle Angel",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Alita%3A%20Battle%20Angel%20trailer",
+      "image": ""
+    },
+    {
+      "id": 134,
+      "title": "2001: A Space Odyssey",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=2001%3A%20A%20Space%20Odyssey%20trailer",
+      "image": ""
+    },
+    {
+      "id": 135,
+      "title": "Alien",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Alien%20trailer",
+      "image": ""
+    },
+    {
+      "id": 136,
+      "title": "Passengers (2016)",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=Passengers%20%282016%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 137,
+      "title": "The Colour of Magic",
+      "genre": "FICTION",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Colour%20of%20Magic%20trailer",
+      "image": ""
+    },
+    {
+      "id": 138,
+      "title": "Heavy Metal",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Heavy%20Metal%20trailer",
+      "image": ""
+    },
+    {
+      "id": 139,
+      "title": "Isle of Dogs",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Isle%20of%20Dogs%20trailer",
+      "image": ""
+    },
+    {
+      "id": 140,
+      "title": "Coraline",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Coraline%20trailer",
+      "image": ""
+    },
+    {
+      "id": 141,
+      "title": "Corpse Bride",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Corpse%20Bride%20trailer",
+      "image": ""
+    },
+    {
+      "id": 142,
+      "title": "The Nightmare Before Christmas",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Nightmare%20Before%20Christmas%20trailer",
+      "image": ""
+    },
+    {
+      "id": 143,
+      "title": "The Iron Giant",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Iron%20Giant%20trailer",
+      "image": ""
+    },
+    {
+      "id": 144,
+      "title": "Treasure Planet",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Treasure%20Planet%20trailer",
+      "image": ""
+    },
+    {
+      "id": 145,
+      "title": "9",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=9%20trailer",
+      "image": ""
+    },
+    {
+      "id": 146,
+      "title": "Monster House",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Monster%20House%20trailer",
+      "image": ""
+    },
+    {
+      "id": 147,
+      "title": "Entergalactic",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Entergalactic%20trailer",
+      "image": ""
+    },
+    {
+      "id": 148,
+      "title": "Mutafukaz",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Mutafukaz%20trailer",
+      "image": ""
+    },
+    {
+      "id": 149,
+      "title": "Spirited Away",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Spirited%20Away%20trailer",
+      "image": ""
+    },
+    {
+      "id": 150,
+      "title": "Akira",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Akira%20trailer",
+      "image": ""
+    },
+    {
+      "id": 151,
+      "title": "Castle in the Sky",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Castle%20in%20the%20Sky%20trailer",
+      "image": ""
+    },
+    {
+      "id": 152,
+      "title": "Cowboy Bebop (movie/show)",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Cowboy%20Bebop%20%28movie/show%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 153,
+      "title": "Ninja Scroll (movie only)",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Ninja%20Scroll%20%28movie%20only%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 154,
+      "title": "\"Cheatin'\" *(weird French/animated movie)*",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=%22Cheatin%27%22%20trailer",
+      "image": ""
+    },
+    {
+      "id": 155,
+      "title": "Mind Game (2004)",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Mind%20Game%20%282004%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 156,
+      "title": "Perfect Blue",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Perfect%20Blue%20trailer",
+      "image": ""
+    },
+    {
+      "id": 157,
+      "title": "The Red Turtle (2016)",
+      "genre": "ANIMATED MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Red%20Turtle%20%282016%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 158,
+      "title": "Moneyball",
+      "genre": "SPORTS",
+      "trailer": "https://www.youtube.com/results?search_query=Moneyball%20trailer",
+      "image": ""
+    },
+    {
+      "id": 159,
+      "title": "Time Trap",
+      "genre": "THRILLER",
+      "trailer": "https://www.youtube.com/results?search_query=Time%20Trap%20trailer",
+      "image": ""
+    },
+    {
+      "id": 160,
+      "title": "Boiling Point",
+      "genre": "THRILLER",
+      "trailer": "https://www.youtube.com/results?search_query=Boiling%20Point%20trailer",
+      "image": ""
+    },
+    {
+      "id": 161,
+      "title": "Dead Man's Wire",
+      "genre": "THRILLER",
+      "trailer": "https://www.youtube.com/results?search_query=Dead%20Man%27s%20Wire%20trailer",
+      "image": ""
+    },
+    {
+      "id": 162,
+      "title": "The Platform",
+      "genre": "FOREIGN MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Platform%20trailer",
+      "image": ""
+    },
+    {
+      "id": 163,
+      "title": "Taste of Cherry (1997)",
+      "genre": "FOREIGN MOVIES",
+      "trailer": "https://www.youtube.com/results?search_query=Taste%20of%20Cherry%20%281997%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 164,
+      "title": "Fallout (show)",
+      "genre": "TV SHOWS",
+      "trailer": "https://www.youtube.com/results?search_query=Fallout%20%28show%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 165,
+      "title": "The Bear",
+      "genre": "TV SHOWS",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Bear%20trailer",
+      "image": ""
+    },
+    {
+      "id": 166,
+      "title": "Lost Girl +",
+      "genre": "TV SHOWS",
+      "trailer": "https://www.youtube.com/results?search_query=Lost%20Girl%20%2B%20trailer",
+      "image": ""
+    },
+    {
+      "id": 167,
+      "title": "Check It Out! with Dr. Steve Brule",
+      "genre": "TV SHOWS",
+      "trailer": "https://www.youtube.com/results?search_query=Check%20It%20Out%21%20with%20Dr.%20Steve%20Brule%20trailer",
+      "image": ""
+    },
+    {
+      "id": 168,
+      "title": "Tour de Pharmacy",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Tour%20de%20Pharmacy%20trailer",
+      "image": ""
+    },
+    {
+      "id": 169,
+      "title": "Lords of Dogtown (skate movie)",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Lords%20of%20Dogtown%20%28skate%20movie%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 170,
+      "title": "Rocketman",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Rocketman%20trailer",
+      "image": ""
+    },
+    {
+      "id": 171,
+      "title": "Rush (2013)",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Rush%20%282013%29%20trailer",
+      "image": ""
+    },
+    {
+      "id": 172,
+      "title": "Ford v Ferrari",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Ford%20v%20Ferrari%20trailer",
+      "image": ""
+    },
+    {
+      "id": 173,
+      "title": "Catch Me If You Can",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Catch%20Me%20If%20You%20Can%20trailer",
+      "image": ""
+    },
+    {
+      "id": 174,
+      "title": "The Social Network",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Social%20Network%20trailer",
+      "image": ""
+    },
+    {
+      "id": 175,
+      "title": "Into the Wild",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Into%20the%20Wild%20trailer",
+      "image": ""
+    },
+    {
+      "id": 176,
+      "title": "Bohemian Rhapsody",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Bohemian%20Rhapsody%20trailer",
+      "image": ""
+    },
+    {
+      "id": 177,
+      "title": "BlackBerry",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=BlackBerry%20trailer",
+      "image": ""
+    },
+    {
+      "id": 178,
+      "title": "The Doors",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=The%20Doors%20trailer",
+      "image": ""
+    },
+    {
+      "id": 179,
+      "title": "Man on the Moon",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Man%20on%20the%20Moon%20trailer",
+      "image": ""
+    },
+    {
+      "id": 180,
+      "title": "Bob Marley: One Love",
+      "genre": "BIO PICS",
+      "trailer": "https://www.youtube.com/results?search_query=Bob%20Marley%3A%20One%20Love%20trailer",
+      "image": ""
+    },
+    {
+      "id": 181,
+      "title": "Space Pirate Captain Harlock",
+      "genre": "UNSORTED / TO FILE",
+      "trailer": "https://www.youtube.com/results?search_query=Space%20Pirate%20Captain%20Harlock%20trailer",
+      "image": ""
+    },
+    {
+      "id": 182,
+      "title": "Hoppers *(need more info \u2014 couldn't confirm which title this is)*",
+      "genre": "UNSORTED / TO FILE",
+      "trailer": "https://www.youtube.com/results?search_query=Hoppers%20trailer",
+      "image": ""
+    },
+    {
+      "id": 183,
+      "title": "Stuck in the Globosphere *(couldn't confirm this title \u2014 check spelling?)*",
+      "genre": "UNSORTED / TO FILE",
+      "trailer": "https://www.youtube.com/results?search_query=Stuck%20in%20the%20Globosphere%20trailer",
+      "image": ""
+    }
+  ]
+}
