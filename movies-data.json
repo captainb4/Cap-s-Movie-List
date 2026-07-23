@@ -169,13 +169,6 @@
       "image": ""
     },
     {
-      "id": 25,
-      "title": "Drama",
-      "genre": "UNSORTED / TO FILE",
-      "trailer": "https://www.youtube.com/results?search_query=Drama%20trailer",
-      "image": ""
-    },
-    {
       "id": 26,
       "title": "Monty Python",
       "genre": "COMEDY",
@@ -1269,15 +1262,15 @@
     },
     {
       "id": 182,
-      "title": "Hoppers *(need more info — couldn't confirm which title this is)*",
-      "genre": "UNSORTED / TO FILE",
+      "title": "Hoppers (2026)",
+      "genre": "ANIMATED",
       "trailer": "https://www.youtube.com/results?search_query=Hoppers%20trailer",
       "image": ""
     },
     {
       "id": 183,
-      "title": "Stuck in the Globosphere *(couldn't confirm this title — check spelling?)*",
-      "genre": "UNSORTED / TO FILE",
+      "title": "Stuck in the Globosphere",
+      "genre": "TV SHOWS",
       "trailer": "https://www.youtube.com/results?search_query=Stuck%20in%20the%20Globosphere%20trailer",
       "image": ""
     }
