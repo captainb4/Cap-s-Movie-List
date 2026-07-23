@@ -449,6 +449,8 @@ function render(){
       const diff = new Date(a.watched_at) - new Date(b.watched_at);
       return sortMode === 'recent' ? -diff : diff;
     });
+  } else {
+    filtered.sort((a,b)=> a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
   }
 
   document.getElementById('stat-showing').textContent = filtered.length;
@@ -542,7 +544,7 @@ function render(){
 }
 
 function refreshGenresFromMovies(){
-  genres = [...new Set(movies.map(m=>m.genre))];
+  genres = [...new Set(movies.map(m=>m.genre))].sort((a,b)=> a.localeCompare(b));
   genres.forEach((g,i)=>{
     if(!genreColors[g]) genreColors[g] = GENRE_PALETTE[i % GENRE_PALETTE.length];
   });
