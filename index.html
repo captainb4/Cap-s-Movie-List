@@ -50,7 +50,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .main-sub{font-size:11px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
 .card{border:1px solid var(--border);background:var(--surface);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;transition:all .15s;cursor:default}
-.card:hover{border-color:var(--card-color,var(--accent));box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.card:hover{border-color:var(--card-color,var(--accent));transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.4)}
 .poster{aspect-ratio:2/3;position:relative;overflow:hidden;background:var(--bg)}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;background:linear-gradient(160deg,var(--card-color,var(--accent)) 0%, var(--bg) 78%);}
 .poster-fallback::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(0,0,0,0) 0 8px,rgba(0,0,0,.12) 8px 9px);}
@@ -63,9 +63,6 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .trailer-btn{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;text-decoration:none;border-radius:2px;transition:all .1s}
 .trailer-btn:hover{border-color:var(--card-color,var(--accent));color:var(--card-color,var(--accent));background:rgba(170,255,68,.06)}
 .trailer-btn::before{content:'▶'}
-.btn-row{margin-top:auto;display:flex;gap:6px}
-.btn-row .trailer-btn{margin-top:0;flex:1}
-.watch-btn::before{content:'⏵'}
 .empty-msg{font-family:'VT323',monospace;font-size:20px;color:var(--muted);letter-spacing:2px;padding:40px 0;text-align:center}
 .footer-note{margin-top:28px;font-size:9px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);padding-top:14px}
 .load-msg{font-family:'VT323',monospace;font-size:18px;color:var(--muted);letter-spacing:2px;padding:60px 0;text-align:center}
@@ -100,6 +97,14 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:var(--muted)}
 .sync-dot.ok{background:var(--accent)}
 .sync-dot.err{background:var(--accent2)}
+
+/* sort row */
+.sort-row{display:flex;gap:6px;align-items:center;width:100%;margin-top:6px}
+.sort-label{font-size:9px;color:var(--muted);letter-spacing:1px;margin-right:2px}
+.sort-btn{padding:5px 10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:14px;letter-spacing:.5px;cursor:pointer;border-radius:2px;transition:all .1s}
+.sort-btn:hover{color:var(--text)}
+.sort-btn.active{border-color:var(--accent3);color:var(--accent3);background:rgba(68,170,255,.08)}
+.rating-row{display:flex;align-items:center;gap:6px}
 
 /* theme panel */
 .theme-panel{margin-top:auto}
@@ -164,11 +169,17 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   <div class="main">
     <div class="main-head">
       <div class="main-title" id="main-title">ALL TITLES</div>
-      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span> <button id="force-sync-btn" style="margin-left:8px;font-size:10px;padding:2px 8px;cursor:pointer;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:2px;">RE-SYNC FROM JSON</button></div>
+      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
       <div class="filter-row">
         <button class="filter-btn active" data-filter="all">ALL</button>
         <button class="filter-btn" data-filter="watched">WATCHED</button>
         <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
+      </div>
+      <div class="sort-row">
+        <span class="sort-label">SORT:</span>
+        <button class="sort-btn active" data-sort="default">DEFAULT</button>
+        <button class="sort-btn" data-sort="recent">RECENTLY WATCHED</button>
+        <button class="sort-btn" data-sort="longago">NOT WATCHED IN A WHILE</button>
       </div>
     </div>
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
@@ -199,8 +210,13 @@ let genres = [];
 let genreColors = {};
 let activeGenre = 'ALL';
 let statusFilter = 'all';
+let sortMode = 'default';
 let query = '';
 let activeTheme = 0;
+
+// old title -> cleaned-up genre. Applied once per row on load to migrate
+// existing Supabase rows without needing manual SQL edits.
+const GENRE_MIGRATION_MAP = {"Uncharted": "ACTION", "Gone in 60 Seconds": "ACTION", "Baby Driver": "ACTION", "Spider-Man": "ACTION", "Jurassic Park": "ACTION", "Gran Turismo": "ACTION", "Ant-Man": "ACTION", "Thor": "ACTION", "Top Gun": "ACTION", "War Dogs": "ACTION", "The Raid 1\u20132": "ACTION", "Ong-Bak": "ACTION", "The Dark Knight": "ACTION", "Jaws": "ACTION", "Pulp Fiction": "ADVENTURE", "Back to the Future": "ADVENTURE", "The Goonies": "ADVENTURE", "Gremlins": "ADVENTURE", "The Green Knight": "ADVENTURE", "Hard Ticket to Hawaii": "ADVENTURE", "When You Finish Saving the World": "COMEDY", "Robin Hood: Men in Tights": "COMEDY", "Ferris Bueller's Day Off": "COMEDY", "Superbad": "COMEDY", "Monty Python": "COMEDY", "Bill & Ted": "COMEDY", "Wayne's World": "COMEDY", "Tenacious D in The Pick of Destiny": "COMEDY", "The Princess Bride": "COMEDY", "Napoleon Dynamite": "COMEDY", "The Breakfast Club": "COMEDY", "21 Jump Street": "COMEDY", "Dazed and Confused": "COMEDY", "School of Rock": "COMEDY", "Nacho Libre": "COMEDY", "Deadpool": "COMEDY", "Mac and Devin Go to High School": "COMEDY", "Pineapple Express": "COMEDY", "Scary Movie franchise": "COMEDY", "Fast Times at Ridgemont High": "COMEDY", "Friday 1\u20133": "COMEDY", "Super Troopers": "COMEDY", "The Blart Side of the Mall *(Paul Blart: Mall Cop?)*": "COMEDY", "Project X": "COMEDY", "Rush Hour 1\u20132": "COMEDY", "Shanghai Noon + Shanghai Knights": "COMEDY", "Be Kind Rewind": "COMEDY", "Hot Rod": "COMEDY", "King of Staten Island": "COMEDY", "Palm Springs": "COMEDY", "Ted": "COMEDY", "30 Minutes or Less": "COMEDY", "Talladega Nights": "COMEDY", "A Knight's Tale": "COMEDY", "Step Brothers": "COMEDY", "Deathgasm": "COMEDY", "Dungeons & Dragons: Honor Among Thieves": "COMEDY", "Metal Lords": "COMEDY", "Heavy Trip": "COMEDY", "The Rocker": "COMEDY", "Lords of Chaos": "COMEDY", "Paint (2023)": "COMEDY", "Tropic Thunder": "COMEDY", "Airheads": "COMEDY", "Tammy": "COMEDY", "Game Over, Man!": "COMEDY", "Dumb and Dumber": "COMEDY", "The Interview": "COMEDY", "Role Models": "COMEDY", "Borat": "COMEDY", "Br\u00fcno (2009)": "COMEDY", "Dudley Do-Right": "COMEDY", "Ripped (2017)": "COMEDY", "Anchorman": "COMEDY", "Airplane!": "COMEDY", "The Truman Show": "COMEDY", "Austin Powers": "COMEDY", "Dude, Where's My Car?": "COMEDY", "Crazy, Stupid, Love": "COMEDY", "Employee of the Month": "COMEDY", "Paul": "COMEDY", "Walk Hard: The Dewey Cox Story": "COMEDY", "The Big Lebowski": "COMEDY", "Land of the Lost": "COMEDY", "Hot Shots! 1\u20132": "COMEDY", "Submarine (2010)": "COMEDY", "Dave Made a Maze (2017)": "COMEDY", "Toys (1992)": "COMEDY", "Scouts Guide to the Zombie Apocalypse": "COMEDY", "Mountainhead": "COMEDY", "Mad God": "HORROR", "The Shining": "HORROR", "Studio 666": "HORROR", "Frankenstein's Army": "HORROR", "The Evil Dead": "HORROR", "Pan's Labyrinth": "HORROR", "Killer Klowns from Outer Space": "HORROR", "Hunger (2009)": "HORROR", "We Are What We Are": "HORROR", "The Silence of the Lambs": "HORROR", "Cannibal Holocaust": "HORROR", "It": "HORROR", "Sky Sharks (2020)": "HORROR", "Clowns Are White (2022)": "HORROR", "Other Mommy": "HORROR", "The Invite (2026)": "HORROR", "Pitch Perfect": "MUSICAL", "The Rocky Horror Picture Show": "MUSICAL", "Harry Potter musical *(fan parody?)*": "MUSICAL", "Labyrinth": "MUSICAL", "Yesterday": "MUSICAL", "Pink Floyd \u2013 The Wall": "MUSICAL", "Sweeney Todd: The Demon Barber of Fleet Street": "MUSICAL", "Frankenweenie": "THRILLER & MYSTERY", "ParaNorman": "THRILLER & MYSTERY", "High Fidelity": "DRAMA", "M\u00f6tley Cr\u00fce's The Dirt": "DRAMA", "The Greatest Beer Run Ever": "DRAMA", "My Dinner with Andre": "DRAMA", "127 Hours": "DRAMA", "Whiplash (2014)": "DRAMA", "We Are Your Friends": "DRAMA", "The Guardian (2006)": "DRAMA", "Spaceman": "SCI-FI & FANTASY", "Gravity": "SCI-FI & FANTASY", "Coherence (2013)": "SCI-FI & FANTASY", "The Signal": "SCI-FI & FANTASY", "Avatar": "SCI-FI & FANTASY", "Star Wars": "SCI-FI & FANTASY", "Lord of the Rings / The Hobbit / The 1978 animated one": "SCI-FI & FANTASY", "Dune 1\u20132": "SCI-FI & FANTASY", "Alita: Battle Angel": "SCI-FI & FANTASY", "2001: A Space Odyssey": "SCI-FI & FANTASY", "Alien": "SCI-FI & FANTASY", "Passengers (2016)": "SCI-FI & FANTASY", "The Colour of Magic": "SCI-FI & FANTASY", "Heavy Metal": "ANIMATION", "Isle of Dogs": "ANIMATION", "Coraline": "ANIMATION", "Corpse Bride": "ANIMATION", "The Nightmare Before Christmas": "ANIMATION", "The Iron Giant": "ANIMATION", "Treasure Planet": "ANIMATION", "9": "ANIMATION", "Monster House": "ANIMATION", "Entergalactic": "ANIMATION", "Mutafukaz": "ANIMATION", "Spirited Away": "ANIMATION", "Akira": "ANIMATION", "Castle in the Sky": "ANIMATION", "Cowboy Bebop (movie/show)": "ANIMATION", "Ninja Scroll (movie only)": "ANIMATION", "\"Cheatin'\" *(weird French/animated movie)*": "ANIMATION", "Mind Game (2004)": "ANIMATION", "Perfect Blue": "ANIMATION", "The Red Turtle (2016)": "ANIMATION", "Moneyball": "DRAMA", "Time Trap": "THRILLER & MYSTERY", "Boiling Point": "THRILLER & MYSTERY", "Dead Man's Wire": "THRILLER & MYSTERY", "The Platform": "FOREIGN", "Taste of Cherry (1997)": "FOREIGN", "Fallout (show)": "TV SHOWS", "The Bear": "TV SHOWS", "Lost Girl +": "TV SHOWS", "Check It Out! with Dr. Steve Brule": "TV SHOWS", "Tour de Pharmacy": "BIOGRAPHY", "Lords of Dogtown (skate movie)": "BIOGRAPHY", "Rocketman": "BIOGRAPHY", "Rush (2013)": "BIOGRAPHY", "Ford v Ferrari": "BIOGRAPHY", "Catch Me If You Can": "BIOGRAPHY", "The Social Network": "BIOGRAPHY", "Into the Wild": "BIOGRAPHY", "Bohemian Rhapsody": "BIOGRAPHY", "BlackBerry": "BIOGRAPHY", "The Doors": "BIOGRAPHY", "Man on the Moon": "BIOGRAPHY", "Bob Marley: One Love": "BIOGRAPHY", "Space Pirate Captain Harlock": "UNSORTED", "Hoppers *(need more info \u2014 couldn't confirm which title this is)*": "UNSORTED", "Stuck in the Globosphere *(couldn't confirm this title \u2014 check spelling?)*": "UNSORTED"};
 
 // ---- Supabase ----
 const SUPABASE_URL = 'https://obaspmovyztvvqhymdcc.supabase.co';
@@ -210,11 +226,6 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function trailerUrlFor(title){
   const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(clean + ' trailer')}`;
-}
-
-function nepuUrlFor(title){
-  const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
-  return `https://nepu.to/search/${encodeURIComponent(clean)}`;
 }
 
 function setSyncStatus(state, text){
@@ -361,12 +372,21 @@ function render(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   const q = query.trim().toLowerCase();
-  const filtered = movies.filter(m=>{
+  let filtered = movies.filter(m=>{
     const genreOk = activeGenre === 'ALL' || m.genre === activeGenre;
     const searchOk = !q || m.title.toLowerCase().includes(q);
     const statusOk = statusFilter === 'all' || (statusFilter === 'watched' ? m.watched : !m.watched);
     return genreOk && searchOk && statusOk;
   });
+
+  if(sortMode === 'recent' || sortMode === 'longago'){
+    filtered = filtered.filter(m => m.watched && m.watched_at);
+    filtered.sort((a,b)=>{
+      const diff = new Date(a.watched_at) - new Date(b.watched_at);
+      return sortMode === 'recent' ? -diff : diff;
+    });
+  }
+
   document.getElementById('stat-showing').textContent = filtered.length;
   document.getElementById('empty-msg').style.display = filtered.length ? 'none' : 'block';
 
@@ -376,7 +396,8 @@ function render(){
     const card = document.createElement('div');
     card.className = 'card';
     card.style.setProperty('--card-color', color);
-    const posterUrl = m.image || posterCache[m.title] || '';
+    const cached = posterCache[m.title];
+    const posterUrl = m.image || (cached && cached.poster) || '';
     const imgHtml = posterUrl
       ? `<img class="poster-img" src="${escapeHtml(posterUrl)}" alt="${cleanTitle} poster" onerror="this.remove()">`
       : '';
@@ -384,6 +405,9 @@ function render(){
     const starsHtml = [1,2,3,4,5].map(n=>
       `<span class="star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}">★</span>`
     ).join('');
+    const watchedDateHtml = (sortMode !== 'default' && m.watched_at)
+      ? `<div class="add-status" style="margin-top:0">watched ${new Date(m.watched_at).toLocaleDateString()}</div>`
+      : '';
     card.innerHTML = `
       <div class="poster">
         <div class="poster-fallback">
@@ -394,17 +418,17 @@ function render(){
       </div>
       <div class="card-body">
         <div class="card-title">${escapeHtml(m.title)}</div>
+        <div class="rating-row">
+          <div class="stars">${starsHtml}</div>
+        </div>
         <div class="card-controls">
           <label class="watched-toggle${m.watched?' is-watched':''}">
             <input type="checkbox" data-id="${m.id}" class="watched-cb" ${m.watched?'checked':''}>
             WATCHED
           </label>
-          <div class="stars">${starsHtml}</div>
         </div>
-        <div class="btn-row">
-          <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
-          <a class="trailer-btn watch-btn" href="${nepuUrlFor(m.title)}" target="_blank" rel="noopener">WATCH</a>
-        </div>
+        ${watchedDateHtml}
+        <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
       </div>
     `;
     grid.appendChild(card);
@@ -443,6 +467,7 @@ async function seedFromLocalJson(){
     genre: m.genre,
     image: m.image || '',
     watched: false,
+    watched_at: null,
     rating: null,
     notes: ''
   }));
@@ -450,76 +475,13 @@ async function seedFromLocalJson(){
   if(error) throw error;
 }
 
-// Inserts any titles present in movies-data.json but missing from the database,
-// and updates the genre on existing rows whose genre changed in the JSON.
-// This lets edits to the local JSON file sync in on every load, not just the very first run.
-// Logs everything to console and never lets one bad row silently kill the whole batch.
-async function syncNewFromLocalJson(existingRows){
-  const res = await fetch('movies-data.json');
-  if(!res.ok){
-    console.warn('[sync] movies-data.json not found at this path — nothing to diff against');
-    return;
+async function migrateGenres(){
+  const toFix = movies.filter(m => GENRE_MIGRATION_MAP[m.title] && GENRE_MIGRATION_MAP[m.title] !== m.genre);
+  for(const m of toFix){
+    const newGenre = GENRE_MIGRATION_MAP[m.title];
+    m.genre = newGenre; // reflect locally immediately
+    sb.from('movies').update({genre:newGenre}).eq('id', m.id).then(()=>{}); // persist, fire-and-forget
   }
-
-  const data = await res.json();
-  const jsonMovies = data.movies || [];
-  console.log(`[sync] movies-data.json has ${jsonMovies.length} entries; database currently has ${existingRows.length}`);
-
-  const existingByTitle = new Map(existingRows.map(r => [r.title, r]));
-
-  const newRows = jsonMovies
-    .filter(m => !existingByTitle.has(m.title))
-    .map(m => ({
-      title: m.title,
-      genre: m.genre,
-      image: m.image || '',
-      watched: false,
-      rating: null,
-      notes: ''
-    }));
-
-  const genreUpdates = jsonMovies.filter(m => {
-    const existing = existingByTitle.get(m.title);
-    return existing && existing.genre !== m.genre;
-  });
-
-  console.log(`[sync] ${newRows.length} new title(s) to insert, ${genreUpdates.length} genre change(s) to update`);
-
-  let insertedCount = 0, insertFailed = [];
-  if(newRows.length){
-    setSyncStatus('', `inserting ${newRows.length} new title(s)...`);
-    // insert one at a time so a single conflicting/bad row doesn't block the rest
-    for(const row of newRows){
-      const { error } = await sb.from('movies').insert([row]);
-      if(error){
-        console.error(`[sync] FAILED to insert "${row.title}":`, error.message);
-        insertFailed.push(row.title);
-      } else {
-        insertedCount++;
-      }
-    }
-  }
-
-  let updatedCount = 0, updateFailed = [];
-  if(genreUpdates.length){
-    setSyncStatus('', `updating ${genreUpdates.length} genre(s)...`);
-    for(const m of genreUpdates){
-      const existing = existingByTitle.get(m.title);
-      const { error } = await sb.from('movies').update({ genre: m.genre }).eq('id', existing.id);
-      if(error){
-        console.error(`[sync] FAILED to update genre for "${m.title}":`, error.message);
-        updateFailed.push(m.title);
-      } else {
-        updatedCount++;
-      }
-    }
-  }
-
-  console.log(`[sync] done: inserted ${insertedCount}/${newRows.length}, updated ${updatedCount}/${genreUpdates.length}`);
-  if(insertFailed.length) console.warn('[sync] titles that FAILED to insert (check Supabase RLS/policies):', insertFailed);
-  if(updateFailed.length) console.warn('[sync] titles that FAILED to update:', updateFailed);
-
-  return { insertedCount, updatedCount, insertFailed, updateFailed, jsonTotal: jsonMovies.length };
 }
 
 async function loadMovies(){
@@ -528,31 +490,20 @@ async function loadMovies(){
     let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
     if(error) throw error;
 
-    let syncResult = null;
     if(!data || data.length === 0){
       setSyncStatus('', 'first run — importing your list...');
       await seedFromLocalJson();
       ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
       if(error) throw error;
-    } else {
-      syncResult = await syncNewFromLocalJson(data);
-      ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
-      if(error) throw error;
     }
 
     movies = data;
+    await migrateGenres(); // one-time cleanup of any old genre labels
     refreshGenresFromMovies();
 
     document.getElementById('load-status').style.display = 'none';
     document.getElementById('grid').style.display = 'grid';
-
-    if(syncResult && (syncResult.insertFailed.length || syncResult.updateFailed.length)){
-      setSyncStatus('err', `synced with errors — ${syncResult.insertFailed.length + syncResult.updateFailed.length} row(s) failed, see console`);
-    } else if(syncResult && (syncResult.insertedCount || syncResult.updatedCount)){
-      setSyncStatus('ok', `synced (+${syncResult.insertedCount} new, ${syncResult.updatedCount} updated)`);
-    } else {
-      setSyncStatus('ok', `synced — ${movies.length} titles`);
-    }
+    setSyncStatus('ok', 'synced');
 
     render();
     fetchAllPosters(); // runs quietly in the background, re-rendering as posters arrive
@@ -567,9 +518,10 @@ async function loadMovies(){
 
 async function toggleWatched(id, watched){
   const m = movies.find(x=>x.id===id);
-  if(m) m.watched = watched;
+  const watched_at = watched ? new Date().toISOString() : null;
+  if(m){ m.watched = watched; m.watched_at = watched_at; }
   render();
-  const { error } = await sb.from('movies').update({watched}).eq('id', id);
+  const { error } = await sb.from('movies').update({watched, watched_at}).eq('id', id);
   if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
 }
 
@@ -634,37 +586,14 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     render();
   });
 });
-document.getElementById('add-btn').addEventListener('click', addMovie);
-
-document.getElementById('force-sync-btn').addEventListener('click', async ()=>{
-  const btn = document.getElementById('force-sync-btn');
-  btn.disabled = true;
-  const prevLabel = btn.textContent;
-  btn.textContent = 'SYNCING...';
-  try{
-    const { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
-    if(error) throw error;
-    const result = await syncNewFromLocalJson(data || []);
-    const { data: fresh, error: err2 } = await sb.from('movies').select('*').order('id', {ascending:true});
-    if(err2) throw err2;
-    movies = fresh;
-    refreshGenresFromMovies();
+document.querySelectorAll('.sort-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    sortMode = btn.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
     render();
-    if(result && (result.insertFailed.length || result.updateFailed.length)){
-      setSyncStatus('err', `synced with errors — ${result.insertFailed.length + result.updateFailed.length} row(s) failed, see console`);
-    } else if(result && (result.insertedCount || result.updatedCount)){
-      setSyncStatus('ok', `synced (+${result.insertedCount} new, ${result.updatedCount} updated)`);
-    } else {
-      setSyncStatus('ok', `already up to date — ${movies.length} titles`);
-    }
-  }catch(err){
-    console.error('[force sync]', err);
-    setSyncStatus('err', 'sync error — check console');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = prevLabel;
-  }
+  });
 });
+document.getElementById('add-btn').addEventListener('click', addMovie);
 
 loadPosterCache();
 buildThemeGrid();
