@@ -85,6 +85,14 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .star{cursor:pointer;font-size:13px;color:var(--border);line-height:1;transition:color .1s}
 .star:hover, .star.filled{color:var(--card-color,var(--accent))}
 
+/* streaming availability */
+.streaming-row{display:flex;flex-direction:column;gap:4px;font-size:9px;color:var(--muted);letter-spacing:.3px}
+.streaming-row.loading,.streaming-row.none{font-style:italic}
+.streaming-label{letter-spacing:1px}
+.streaming-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.streaming-logo{width:22px;height:22px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.streaming-pill{padding:2px 6px;border:1px solid var(--border);border-radius:2px;font-size:9px;color:var(--text);background:var(--surface2)}
+
 /* filter row */
 .filter-row{display:flex;gap:6px;margin-left:auto}
 .filter-btn{padding:5px 10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px;transition:all .1s}
@@ -197,6 +205,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <button class="filter-btn" data-filter="watched">WATCHED</button>
         <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
         <button class="filter-btn" id="random-btn" title="pick a random movie from the current view">🎲 RANDOM</button>
+        <button class="filter-btn" id="streaming-toggle" title="show where each movie is streaming (US, via TMDB/JustWatch)">📺 STREAMING</button>
       </div>
       <div class="sort-row">
         <span class="sort-label">SORT:</span>
@@ -208,7 +217,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it — both save straight to the database and sync across any device you open this on.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it — both save straight to the database and sync across any device you open this on. Toggle 📺 STREAMING to see where each title is available (US region); this data is sourced from JustWatch via TMDB and may take a moment to load the first time.</div>
   </div>
 </div>
 
@@ -264,6 +273,23 @@ const TMDB_API_KEY = '4aaf24ed48c1399968b2c9ac0d66278b';
 const LS_CACHE = 'capsMovieList_posterCache';
 let posterCache = {};
 let fetchingPosters = false;
+
+// ---- streaming availability (TMDB watch/providers, data sourced from JustWatch) ----
+const LS_STREAM_CACHE = 'capsMovieList_streamingCache';
+const STREAM_REGION = 'US';
+let streamingCache = {};
+let fetchingStreaming = false;
+let showStreaming = false;
+
+function loadStreamingCache(){
+  try{
+    const raw = safeLocalStorageGet(LS_STREAM_CACHE);
+    streamingCache = raw ? JSON.parse(raw) : {};
+  }catch(e){ streamingCache = {}; }
+}
+function saveStreamingCache(){
+  safeLocalStorageSet(LS_STREAM_CACHE, JSON.stringify(streamingCache));
+}
 
 function safeLocalStorageGet(key){
   try{ return localStorage.getItem(key); }catch(e){ return null; }
@@ -373,6 +399,51 @@ async function fetchAllPosters(){
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
   }
   fetchingPosters = false;
+}
+
+async function fetchOneStreamingInfo(title, apiKey){
+  const match = await tmdbFindMovie(title, apiKey);
+  if(!match) return { flatrate:[], rent:[], buy:[], link:null };
+
+  const res = await fetch(`https://api.themoviedb.org/3/movie/${match.id}/watch/providers?api_key=${apiKey}`);
+  if(!res.ok) throw new Error('tmdb error ' + res.status);
+  const data = await res.json();
+  const region = (data.results || {})[STREAM_REGION];
+  if(!region) return { flatrate:[], rent:[], buy:[], link:null };
+
+  const mapProviders = arr => (arr || []).map(p => ({
+    name: p.provider_name,
+    logo: p.logo_path ? `https://image.tmdb.org/t/p/w45${p.logo_path}` : ''
+  }));
+
+  return {
+    flatrate: mapProviders(region.flatrate),
+    rent: mapProviders(region.rent),
+    buy: mapProviders(region.buy),
+    link: region.link || null
+  };
+}
+
+async function fetchAllStreaming(){
+  if(fetchingStreaming) return;
+
+  const toFetch = movies.filter(m => !(m.title in streamingCache));
+  if(toFetch.length === 0) return;
+
+  fetchingStreaming = true;
+  for(const m of toFetch){
+    let info = null;
+    try{
+      info = await fetchOneStreamingInfo(m.title, TMDB_API_KEY);
+    }catch(e){
+      break; // likely bad key or rate limit — stop quietly, whatever's cached stays usable
+    }
+    streamingCache[m.title] = info;
+    saveStreamingCache();
+    if(showStreaming) render();
+    await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
+  }
+  fetchingStreaming = false;
 }
 
 function applyTheme(i){
@@ -486,6 +557,28 @@ function render(){
     const watchedDateHtml = (sortMode !== 'default' && m.watched_at)
       ? `<div class="add-status" style="margin-top:0">watched ${new Date(m.watched_at).toLocaleDateString()}</div>`
       : '';
+    let streamingHtml = '';
+    if(showStreaming){
+      const info = streamingCache[m.title];
+      if(info === undefined){
+        streamingHtml = `<div class="streaming-row loading">checking availability...</div>`;
+      } else {
+        const hasFlat = info.flatrate && info.flatrate.length;
+        const hasRent = info.rent && info.rent.length;
+        const hasBuy = info.buy && info.buy.length;
+        const provs = hasFlat ? info.flatrate : (hasRent ? info.rent : info.buy);
+        if(provs && provs.length){
+          const label = hasFlat ? 'STREAMING:' : (hasRent ? 'RENT:' : 'BUY:');
+          const badges = provs.map(p => p.logo
+            ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'streaming-pill',textContent:'${escapeHtml(p.name)}'}))">`
+            : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`
+          ).join('');
+          streamingHtml = `<div class="streaming-row"><span class="streaming-label">${label}</span><div class="streaming-badges">${badges}</div></div>`;
+        } else {
+          streamingHtml = `<div class="streaming-row none">not available to stream (${STREAM_REGION})</div>`;
+        }
+      }
+    }
     const bodyHtml = editMode ? `
       <div class="edit-panel">
         <span class="add-label">TITLE (include year in parens if you like)</span>
@@ -508,6 +601,7 @@ function render(){
         </label>
       </div>
       ${watchedDateHtml}
+      ${streamingHtml}
       <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
     `;
     card.innerHTML = `
@@ -767,12 +861,19 @@ document.getElementById('edit-mode-toggle').addEventListener('click', ()=>{
   btn.textContent = editMode ? 'EDIT: ON' : 'EDIT MODE';
   render();
 });
-document.querySelectorAll('.filter-btn').forEach(btn=>{
+document.querySelectorAll('.filter-btn[data-filter]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     statusFilter = btn.dataset.filter;
-    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.filter-btn[data-filter]').forEach(b=>b.classList.toggle('active', b===btn));
     render();
   });
+});
+document.getElementById('streaming-toggle').addEventListener('click', ()=>{
+  showStreaming = !showStreaming;
+  const btn = document.getElementById('streaming-toggle');
+  btn.classList.toggle('active', showStreaming);
+  render();
+  if(showStreaming) fetchAllStreaming();
 });
 document.querySelectorAll('.sort-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -784,6 +885,7 @@ document.querySelectorAll('.sort-btn').forEach(btn=>{
 document.getElementById('add-btn').addEventListener('click', addMovie);
 
 loadPosterCache();
+loadStreamingCache();
 buildThemeGrid();
 loadMovies();
 </script>
