@@ -63,6 +63,9 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .trailer-btn{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;text-decoration:none;border-radius:2px;transition:all .1s}
 .trailer-btn:hover{border-color:var(--card-color,var(--accent));color:var(--card-color,var(--accent));background:rgba(170,255,68,.06)}
 .trailer-btn::before{content:'▶'}
+.btn-row{margin-top:auto;display:flex;gap:6px}
+.btn-row .trailer-btn{margin-top:0;flex:1}
+.watch-btn::before{content:'⏵'}
 .empty-msg{font-family:'VT323',monospace;font-size:20px;color:var(--muted);letter-spacing:2px;padding:40px 0;text-align:center}
 .footer-note{margin-top:28px;font-size:9px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);padding-top:14px}
 .load-msg{font-family:'VT323',monospace;font-size:18px;color:var(--muted);letter-spacing:2px;padding:60px 0;text-align:center}
@@ -207,6 +210,11 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function trailerUrlFor(title){
   const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(clean + ' trailer')}`;
+}
+
+function nepuUrlFor(title){
+  const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
+  return `https://nepu.to/search/${encodeURIComponent(clean)}`;
 }
 
 function setSyncStatus(state, text){
@@ -393,7 +401,10 @@ function render(){
           </label>
           <div class="stars">${starsHtml}</div>
         </div>
-        <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
+        <div class="btn-row">
+          <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
+          <a class="trailer-btn watch-btn" href="${nepuUrlFor(m.title)}" target="_blank" rel="noopener">WATCH</a>
+        </div>
       </div>
     `;
     grid.appendChild(card);
