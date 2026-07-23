@@ -163,6 +163,12 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <span class="add-label">POSTER URL (optional)</span>
         <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
       </div>
+      <div class="add-field">
+        <label class="watched-toggle" for="add-franchise" style="cursor:pointer">
+          <input type="checkbox" id="add-franchise">
+          <span>ALSO ADD REST OF FRANCHISE (via TMDB)</span>
+        </label>
+      </div>
       <button class="add-btn" id="add-btn">ADD TO LIST</button>
       <div class="add-status" id="add-status"></div>
     </div>
@@ -287,6 +293,53 @@ async function fetchOnePoster(title, apiKey){
   const data = await res.json();
   const hit = (data.results || [])[0];
   return hit && hit.poster_path ? `https://image.tmdb.org/t/p/w342${hit.poster_path}` : null;
+}
+
+async function tmdbFindMovie(title, apiKey){
+  const {query:q, year} = tmdbQueryFor(title);
+  let url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(q)}`;
+  if(year) url += `&primary_release_year=${year}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('tmdb error ' + res.status);
+  const data = await res.json();
+  return (data.results || [])[0] || null;
+}
+
+async function tmdbGetMovieDetails(id, apiKey){
+  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}`);
+  if(!res.ok) throw new Error('tmdb error ' + res.status);
+  return res.json();
+}
+
+async function tmdbGetCollection(collectionId, apiKey){
+  const res = await fetch(`https://api.themoviedb.org/3/collection/${collectionId}?api_key=${apiKey}`);
+  if(!res.ok) throw new Error('tmdb error ' + res.status);
+  return res.json();
+}
+
+// Given a title, find its TMDB collection (franchise) and return the other
+// entries in it as insertable movie rows, using the same genre and skipping
+// anything (case-insensitively) already present in `existingTitles`.
+async function tmdbFranchiseRows(title, genre, existingTitles){
+  const match = await tmdbFindMovie(title, TMDB_API_KEY);
+  if(!match) return {rows:[], note:' (could not find on TMDB)'};
+
+  const details = await tmdbGetMovieDetails(match.id, TMDB_API_KEY);
+  if(!details.belongs_to_collection) return {rows:[], note:' (not part of a TMDB collection)'};
+
+  const coll = await tmdbGetCollection(details.belongs_to_collection.id, TMDB_API_KEY);
+  const rows = (coll.parts || [])
+    .filter(p => p.title && !existingTitles.has(p.title.trim().toLowerCase()))
+    .map(p=>{
+      existingTitles.add(p.title.trim().toLowerCase());
+      return {
+        title: p.title,
+        genre,
+        image: p.poster_path ? `https://image.tmdb.org/t/p/w342${p.poster_path}` : '',
+        watched:false, rating:null, notes:''
+      };
+    });
+  return {rows, note: ` + ${rows.length} franchise title${rows.length===1?'':'s'} from "${coll.name}"`};
 }
 
 async function fetchAllPosters(){
@@ -606,12 +659,14 @@ async function addMovie(){
   const titleEl = document.getElementById('add-title');
   const genreEl = document.getElementById('add-genre');
   const imageEl = document.getElementById('add-image');
+  const franchiseEl = document.getElementById('add-franchise');
   const statusEl = document.getElementById('add-status');
   const btn = document.getElementById('add-btn');
 
   const title = titleEl.value.trim();
   const genre = genreEl.value.trim().toUpperCase();
   const image = imageEl.value.trim();
+  const includeFranchise = !!(franchiseEl && franchiseEl.checked);
 
   if(!title || !genre){
     statusEl.textContent = 'title and genre are both required';
@@ -620,8 +675,27 @@ async function addMovie(){
 
   btn.disabled = true;
   statusEl.textContent = 'adding...';
+
+  let rowsToInsert = [{ title, genre, image, watched:false, rating:null, notes:'' }];
+  let franchiseNote = '';
+
+  if(includeFranchise){
+    statusEl.textContent = 'looking up franchise on TMDB...';
+    try{
+      const existingTitles = new Set(movies.map(m=>m.title.trim().toLowerCase()));
+      existingTitles.add(title.trim().toLowerCase());
+      const { rows, note } = await tmdbFranchiseRows(title, genre, existingTitles);
+      rowsToInsert = rowsToInsert.concat(rows);
+      franchiseNote = note;
+    }catch(e){
+      console.error(e);
+      franchiseNote = ' (franchise lookup failed — check console)';
+    }
+    statusEl.textContent = 'adding...';
+  }
+
   const { data, error } = await sb.from('movies')
-    .insert([{ title, genre, image, watched:false, rating:null, notes:'' }])
+    .insert(rowsToInsert)
     .select();
   btn.disabled = false;
 
@@ -631,14 +705,15 @@ async function addMovie(){
     return;
   }
 
-  movies.push(data[0]);
+  movies.push(...data);
   refreshGenresFromMovies();
   render();
   titleEl.value = '';
   genreEl.value = '';
   imageEl.value = '';
-  statusEl.textContent = `added "${title}"`;
-  if(!image) fetchAllPosters();
+  if(franchiseEl) franchiseEl.checked = false;
+  statusEl.textContent = `added "${title}"${franchiseNote}`;
+  if(data.some(d=>!d.image)) fetchAllPosters();
 }
 
 document.getElementById('search').addEventListener('input', e=>{
