@@ -161,7 +161,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   <div class="main">
     <div class="main-head">
       <div class="main-title" id="main-title">ALL TITLES</div>
-      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
+      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span> <button id="force-sync-btn" style="margin-left:8px;font-size:10px;padding:2px 8px;cursor:pointer;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:2px;">RE-SYNC FROM JSON</button></div>
       <div class="filter-row">
         <button class="filter-btn active" data-filter="all">ALL</button>
         <button class="filter-btn" data-filter="watched">WATCHED</button>
@@ -442,12 +442,17 @@ async function seedFromLocalJson(){
 // Inserts any titles present in movies-data.json but missing from the database,
 // and updates the genre on existing rows whose genre changed in the JSON.
 // This lets edits to the local JSON file sync in on every load, not just the very first run.
+// Logs everything to console and never lets one bad row silently kill the whole batch.
 async function syncNewFromLocalJson(existingRows){
   const res = await fetch('movies-data.json');
-  if(!res.ok) return; // no local file to diff against, nothing to do
+  if(!res.ok){
+    console.warn('[sync] movies-data.json not found at this path — nothing to diff against');
+    return;
+  }
 
   const data = await res.json();
   const jsonMovies = data.movies || [];
+  console.log(`[sync] movies-data.json has ${jsonMovies.length} entries; database currently has ${existingRows.length}`);
 
   const existingByTitle = new Map(existingRows.map(r => [r.title, r]));
 
@@ -467,20 +472,43 @@ async function syncNewFromLocalJson(existingRows){
     return existing && existing.genre !== m.genre;
   });
 
+  console.log(`[sync] ${newRows.length} new title(s) to insert, ${genreUpdates.length} genre change(s) to update`);
+
+  let insertedCount = 0, insertFailed = [];
   if(newRows.length){
-    setSyncStatus('', `found ${newRows.length} new title(s) — syncing...`);
-    const { error } = await sb.from('movies').insert(newRows);
-    if(error) throw error;
+    setSyncStatus('', `inserting ${newRows.length} new title(s)...`);
+    // insert one at a time so a single conflicting/bad row doesn't block the rest
+    for(const row of newRows){
+      const { error } = await sb.from('movies').insert([row]);
+      if(error){
+        console.error(`[sync] FAILED to insert "${row.title}":`, error.message);
+        insertFailed.push(row.title);
+      } else {
+        insertedCount++;
+      }
+    }
   }
 
+  let updatedCount = 0, updateFailed = [];
   if(genreUpdates.length){
     setSyncStatus('', `updating ${genreUpdates.length} genre(s)...`);
     for(const m of genreUpdates){
       const existing = existingByTitle.get(m.title);
       const { error } = await sb.from('movies').update({ genre: m.genre }).eq('id', existing.id);
-      if(error) throw error;
+      if(error){
+        console.error(`[sync] FAILED to update genre for "${m.title}":`, error.message);
+        updateFailed.push(m.title);
+      } else {
+        updatedCount++;
+      }
     }
   }
+
+  console.log(`[sync] done: inserted ${insertedCount}/${newRows.length}, updated ${updatedCount}/${genreUpdates.length}`);
+  if(insertFailed.length) console.warn('[sync] titles that FAILED to insert (check Supabase RLS/policies):', insertFailed);
+  if(updateFailed.length) console.warn('[sync] titles that FAILED to update:', updateFailed);
+
+  return { insertedCount, updatedCount, insertFailed, updateFailed, jsonTotal: jsonMovies.length };
 }
 
 async function loadMovies(){
@@ -489,13 +517,14 @@ async function loadMovies(){
     let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
     if(error) throw error;
 
+    let syncResult = null;
     if(!data || data.length === 0){
       setSyncStatus('', 'first run — importing your list...');
       await seedFromLocalJson();
       ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
       if(error) throw error;
     } else {
-      await syncNewFromLocalJson(data);
+      syncResult = await syncNewFromLocalJson(data);
       ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
       if(error) throw error;
     }
@@ -505,7 +534,14 @@ async function loadMovies(){
 
     document.getElementById('load-status').style.display = 'none';
     document.getElementById('grid').style.display = 'grid';
-    setSyncStatus('ok', 'synced');
+
+    if(syncResult && (syncResult.insertFailed.length || syncResult.updateFailed.length)){
+      setSyncStatus('err', `synced with errors — ${syncResult.insertFailed.length + syncResult.updateFailed.length} row(s) failed, see console`);
+    } else if(syncResult && (syncResult.insertedCount || syncResult.updatedCount)){
+      setSyncStatus('ok', `synced (+${syncResult.insertedCount} new, ${syncResult.updatedCount} updated)`);
+    } else {
+      setSyncStatus('ok', `synced — ${movies.length} titles`);
+    }
 
     render();
     fetchAllPosters(); // runs quietly in the background, re-rendering as posters arrive
@@ -588,6 +624,36 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   });
 });
 document.getElementById('add-btn').addEventListener('click', addMovie);
+
+document.getElementById('force-sync-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('force-sync-btn');
+  btn.disabled = true;
+  const prevLabel = btn.textContent;
+  btn.textContent = 'SYNCING...';
+  try{
+    const { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
+    if(error) throw error;
+    const result = await syncNewFromLocalJson(data || []);
+    const { data: fresh, error: err2 } = await sb.from('movies').select('*').order('id', {ascending:true});
+    if(err2) throw err2;
+    movies = fresh;
+    refreshGenresFromMovies();
+    render();
+    if(result && (result.insertFailed.length || result.updateFailed.length)){
+      setSyncStatus('err', `synced with errors — ${result.insertFailed.length + result.updateFailed.length} row(s) failed, see console`);
+    } else if(result && (result.insertedCount || result.updatedCount)){
+      setSyncStatus('ok', `synced (+${result.insertedCount} new, ${result.updatedCount} updated)`);
+    } else {
+      setSyncStatus('ok', `already up to date — ${movies.length} titles`);
+    }
+  }catch(err){
+    console.error('[force sync]', err);
+    setSyncStatus('err', 'sync error — check console');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+  }
+});
 
 loadPosterCache();
 buildThemeGrid();
