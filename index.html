@@ -148,7 +148,7 @@ header{
   overflow-y:auto;
   overflow-x:hidden;
   min-width:0;
-  transition:opacity .2s ease,border-color .2s ease,background .2s;
+  transition:opacity .2s ease,border-color .2s ease,background .2s,transform .25s ease;
   height:calc(100vh - 56px);
   position:sticky;
   top:56px;
@@ -603,10 +603,62 @@ header{
 
 /* ===== Responsive ===== */
 @media(max-width:800px){
-  .layout{grid-template-columns:0 1fr}
-  .layout:not(.sidebar-hidden){grid-template-columns:220px 1fr}
+  .layout{grid-template-columns:1fr !important}
+  .layout:not(.sidebar-hidden) .sidebar{
+    position:fixed;
+    left:0;top:56px;bottom:0;
+    width:280px;
+    z-index:100;
+    box-shadow:4px 0 20px rgba(0,0,0,.5);
+  }
+  .layout.sidebar-hidden .sidebar{
+    transform:translateX(-100%);
+    pointer-events:none;
+    opacity:0;
+  }
   .header-right{display:none}
-  .search-wrap{max-width:none}
+  .search-wrap{max-width:none;flex:1}
+
+  .main{padding:14px 12px}
+
+  .main-head{flex-wrap:wrap;gap:8px}
+  .main-title{font-size:22px}
+  .filter-row{margin-left:0;flex-wrap:wrap}
+
+  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+
+  .card-title{font-size:11px}
+  .poster-genre-tag{font-size:7px;padding:1px 4px}
+  .card-body{padding:8px}
+  .btn-row .trailer-btn{font-size:13px;padding:6px 4px}
+
+  .panel{padding:12px 14px}
+
+  .footer-note{font-size:8px;padding-top:10px;margin-top:20px}
+}
+
+@media(max-width:480px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  .card-title{font-size:10px}
+  .poster-title{font-size:18px}
+  .card-meta{font-size:8px}
+
+  .main{padding:10px 8px}
+  .main-title{font-size:20px}
+
+  .header-logo{font-size:20px;letter-spacing:1px}
+
+  .filter-btn{padding:6px 8px;font-size:12px}
+  .view-btn{padding:4px 8px;font-size:11px}
+
+  .trailer-btn{font-size:12px;padding:5px 4px;letter-spacing:0}
+
+  .stars .star{font-size:14px}
+  .watched-toggle{font-size:8px}
+
+  .load-msg{font-size:16px;padding:40px 0}
+  .empty-msg{font-size:16px;padding:30px 0}
 }
 </style>
 </head>
@@ -629,8 +681,8 @@ header{
     <div class="panel">
       <div class="panel-title">VIEW</div>
       <div class="view-toggle" id="view-toggle">
-        <button class="view-btn active" data-view="personal">MY LIST</button>
-        <button class="view-btn" data-view="tmdb">LIVE DATA</button>
+        <button class="view-btn" data-view="personal">MY LIST</button>
+        <button class="view-btn active" data-view="tmdb">LIVE DATA</button>
       </div>
     </div>
 
@@ -664,7 +716,7 @@ header{
         Fetch live movie data from TMDB. Shows now-playing, popular, and recent releases.
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;">
-        <button class="filter-btn" id="btn-now-playing" data-tmdb-tab="now_playing">NOW PLAYING</button>
+        <button class="filter-btn active" id="btn-now-playing" data-tmdb-tab="now_playing">NOW PLAYING</button>
         <button class="filter-btn" id="btn-popular" data-tmdb-tab="popular">POPULAR</button>
         <button class="filter-btn" id="btn-recent" data-tmdb-tab="recent">RECENT</button>
       </div>
@@ -681,7 +733,7 @@ header{
 
   <div class="main">
     <div class="main-head">
-      <div class="main-title" id="main-title">ALL TITLES</div>
+      <div class="main-title" id="main-title">LIVE MOVIES</div>
       <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span> <button id="force-sync-btn" style="margin-left:8px;font-size:10px;padding:2px 8px;cursor:pointer;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:2px;">RE-SYNC FROM JSON</button></div>
       <div class="filter-row">
         <button class="filter-btn active" data-filter="all">ALL</button>
@@ -727,7 +779,7 @@ let activeGenre = 'ALL';
 let statusFilter = 'all';
 let query = '';
 let activeTheme = 0;
-let currentView = 'personal';
+let currentView = 'tmdb';
 let tmdbData = [];
 let tmdbTab = 'now_playing';
 let tmdbPage = 1;
@@ -1438,6 +1490,24 @@ document.getElementById('btn-recent').addEventListener('click', ()=>switchTmdbTa
 loadPosterCache();
 buildThemeGrid();
 loadTmdbGenres();
+
+// Default to live TMDB data (now playing) on load
+if(window.matchMedia('(max-width:800px)').matches){
+  document.getElementById('layout').classList.add('sidebar-hidden');
+}
+
+// Start with live data view — fetch now-playing movies
+document.getElementById('load-status').textContent = '-- FETCHING LIVE DATA --';
+document.getElementById('load-status').className = 'load-msg';
+document.getElementById('load-status').style.display = 'block';
+document.getElementById('grid').style.display = 'none';
+loadTmdbMovies().then(()=>{
+  document.getElementById('load-status').style.display = 'none';
+  document.getElementById('grid').style.display = 'grid';
+  render();
+});
+
+// Load personal list in the background (non-blocking)
 loadMovies();
 </script>
 </body>
