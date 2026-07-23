@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAP'S MOVIE LIST</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;700&display=swap');
 :root{
@@ -67,6 +68,36 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .load-msg{font-family:'VT323',monospace;font-size:18px;color:var(--muted);letter-spacing:2px;padding:60px 0;text-align:center}
 .load-msg.error{color:var(--accent2)}
 
+/* watched toggle + stars */
+.card-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.watched-toggle{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;font-size:9px;letter-spacing:.5px;color:var(--muted)}
+.watched-toggle input{appearance:none;width:13px;height:13px;border:1px solid var(--border);border-radius:2px;background:var(--surface2);cursor:pointer;position:relative;flex-shrink:0}
+.watched-toggle input:checked{background:var(--card-color,var(--accent));border-color:var(--card-color,var(--accent))}
+.watched-toggle input:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#0d0f0b;line-height:1}
+.watched-toggle.is-watched{color:var(--card-color,var(--accent))}
+.stars{display:flex;gap:1px}
+.star{cursor:pointer;font-size:13px;color:var(--border);line-height:1;transition:color .1s}
+.star:hover, .star.filled{color:var(--card-color,var(--accent))}
+
+/* filter row */
+.filter-row{display:flex;gap:6px;margin-left:auto}
+.filter-btn{padding:5px 10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px;transition:all .1s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(170,255,68,.08)}
+
+/* add movie form */
+.add-field{margin-bottom:8px}
+.add-label{font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px}
+.add-input,.add-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;outline:none;border-radius:2px;transition:border-color .2s}
+.add-input:focus,.add-select:focus{border-color:var(--accent)}
+.add-btn{width:100%;padding:8px 6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;cursor:pointer;border-radius:2px;transition:all .1s;margin-top:4px}
+.add-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.add-btn:disabled{opacity:.4;cursor:default}
+.add-status{font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6;min-height:12px}
+.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:var(--muted)}
+.sync-dot.ok{background:var(--accent)}
+.sync-dot.err{background:var(--accent2)}
+
 /* theme panel */
 .theme-panel{margin-top:auto}
 .scheme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -100,6 +131,24 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 
   <div class="sidebar" id="sidebar">
     <div class="panel">
+      <div class="panel-title">+ ADD MOVIE</div>
+      <div class="add-field">
+        <span class="add-label">TITLE</span>
+        <input type="text" id="add-title" class="add-input" placeholder="movie title...">
+      </div>
+      <div class="add-field">
+        <span class="add-label">GENRE</span>
+        <input type="text" id="add-genre" class="add-input" placeholder="e.g. ACTION (existing or new)" list="genre-options">
+        <datalist id="genre-options"></datalist>
+      </div>
+      <div class="add-field">
+        <span class="add-label">POSTER URL (optional)</span>
+        <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
+      </div>
+      <button class="add-btn" id="add-btn">ADD TO LIST</button>
+      <div class="add-status" id="add-status"></div>
+    </div>
+    <div class="panel">
       <div class="panel-title">GENRES</div>
       <div class="genre-list" id="genre-list"></div>
     </div>
@@ -112,12 +161,17 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   <div class="main">
     <div class="main-head">
       <div class="main-title" id="main-title">ALL TITLES</div>
-      <div class="main-sub">click a poster's TRAILER button to open it on YouTube</div>
+      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">ALL</button>
+        <button class="filter-btn" data-filter="watched">WATCHED</button>
+        <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
+      </div>
     </div>
-    <div id="load-status" class="load-msg">-- LOADING MOVIES-DATA.JSON --</div>
+    <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background. You can also manually set a poster by editing the "image" field for any title in <strong>movies-data.json</strong> — manual entries always take priority over TMDB results. This page must be served over http (GitHub Pages, or a local server) — opening the HTML file directly by double-click will block it from loading the JSON.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it — both save straight to the database and sync across any device you open this on.</div>
   </div>
 </div>
 
@@ -141,8 +195,26 @@ let movies = [];
 let genres = [];
 let genreColors = {};
 let activeGenre = 'ALL';
+let statusFilter = 'all';
 let query = '';
 let activeTheme = 0;
+
+// ---- Supabase ----
+const SUPABASE_URL = 'https://obaspmovyztvvqhymdcc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZAwF4Uav1pAZMVaKAwcRXg_hT3wHBr3';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function trailerUrlFor(title){
+  const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(clean + ' trailer')}`;
+}
+
+function setSyncStatus(state, text){
+  const dot = document.getElementById('sync-dot');
+  const t = document.getElementById('sync-text');
+  dot.className = 'sync-dot' + (state ? ' ' + state : '');
+  t.textContent = text;
+}
 
 // ---- TMDB poster lookup ----
 const TMDB_API_KEY = '4aaf24ed48c1399968b2c9ac0d66278b';
@@ -195,13 +267,18 @@ async function fetchAllPosters(){
 
   fetchingPosters = true;
   for(const m of toFetch){
+    let url = null;
     try{
-      const url = await fetchOnePoster(m.title, TMDB_API_KEY);
+      url = await fetchOnePoster(m.title, TMDB_API_KEY);
       posterCache[m.title] = url; // null cached too, so we don't retry misses every run
     }catch(e){
       break; // likely bad key or rate limit — stop quietly
     }
     savePosterCache();
+    if(url){
+      m.image = url; // reflect locally
+      sb.from('movies').update({image:url}).eq('id', m.id).then(()=>{}); // persist, fire-and-forget
+    }
     render();
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
   }
@@ -254,6 +331,9 @@ function buildGenreList(){
     item.addEventListener('click', ()=>selectGenre(g));
     wrap.appendChild(item);
   });
+
+  const datalist = document.getElementById('genre-options');
+  datalist.innerHTML = genres.map(g=>`<option value="${escapeHtml(g)}">`).join('');
 }
 
 function selectGenre(g){
@@ -276,7 +356,8 @@ function render(){
   const filtered = movies.filter(m=>{
     const genreOk = activeGenre === 'ALL' || m.genre === activeGenre;
     const searchOk = !q || m.title.toLowerCase().includes(q);
-    return genreOk && searchOk;
+    const statusOk = statusFilter === 'all' || (statusFilter === 'watched' ? m.watched : !m.watched);
+    return genreOk && searchOk && statusOk;
   });
   document.getElementById('stat-showing').textContent = filtered.length;
   document.getElementById('empty-msg').style.display = filtered.length ? 'none' : 'block';
@@ -291,6 +372,10 @@ function render(){
     const imgHtml = posterUrl
       ? `<img class="poster-img" src="${escapeHtml(posterUrl)}" alt="${cleanTitle} poster" onerror="this.remove()">`
       : '';
+    const rating = m.rating || 0;
+    const starsHtml = [1,2,3,4,5].map(n=>
+      `<span class="star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}">★</span>`
+    ).join('');
     card.innerHTML = `
       <div class="poster">
         <div class="poster-fallback">
@@ -301,35 +386,143 @@ function render(){
       </div>
       <div class="card-body">
         <div class="card-title">${escapeHtml(m.title)}</div>
-        <a class="trailer-btn" href="${m.trailer}" target="_blank" rel="noopener">TRAILER</a>
+        <div class="card-controls">
+          <label class="watched-toggle${m.watched?' is-watched':''}">
+            <input type="checkbox" data-id="${m.id}" class="watched-cb" ${m.watched?'checked':''}>
+            WATCHED
+          </label>
+          <div class="stars">${starsHtml}</div>
+        </div>
+        <a class="trailer-btn" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener">TRAILER</a>
       </div>
     `;
     grid.appendChild(card);
   });
+
+  grid.querySelectorAll('.watched-cb').forEach(cb=>{
+    cb.addEventListener('change', e=>toggleWatched(Number(e.target.dataset.id), e.target.checked));
+  });
+  grid.querySelectorAll('.star').forEach(s=>{
+    s.addEventListener('click', e=>{
+      const id = Number(e.target.dataset.id);
+      const val = Number(e.target.dataset.val);
+      const m = movies.find(x=>x.id===id);
+      const newVal = (m && m.rating === val) ? 0 : val; // click same star again to clear
+      setRating(id, newVal);
+    });
+  });
 }
 
-async function loadData(){
-  try{
-    const res = await fetch('movies-data.json');
-    if(!res.ok) throw new Error('bad response');
-    const data = await res.json();
-    movies = data.movies || [];
-    genres = [...new Set(movies.map(m=>m.genre))];
-    genres.forEach((g,i)=>{ genreColors[g] = GENRE_PALETTE[i % GENRE_PALETTE.length]; });
+function refreshGenresFromMovies(){
+  genres = [...new Set(movies.map(m=>m.genre))];
+  genres.forEach((g,i)=>{
+    if(!genreColors[g]) genreColors[g] = GENRE_PALETTE[i % GENRE_PALETTE.length];
+  });
+  document.getElementById('stat-total').textContent = movies.length;
+  document.getElementById('stat-genres').textContent = genres.length;
+  buildGenreList();
+}
 
-    document.getElementById('stat-total').textContent = movies.length;
-    document.getElementById('stat-genres').textContent = genres.length;
+async function seedFromLocalJson(){
+  const res = await fetch('movies-data.json');
+  if(!res.ok) throw new Error('no local seed file found');
+  const data = await res.json();
+  const rows = (data.movies || []).map(m => ({
+    title: m.title,
+    genre: m.genre,
+    image: m.image || '',
+    watched: false,
+    rating: null,
+    notes: ''
+  }));
+  const { error } = await sb.from('movies').insert(rows);
+  if(error) throw error;
+}
+
+async function loadMovies(){
+  try{
+    setSyncStatus('', 'connecting to database...');
+    let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
+    if(error) throw error;
+
+    if(!data || data.length === 0){
+      setSyncStatus('', 'first run — importing your list...');
+      await seedFromLocalJson();
+      ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
+      if(error) throw error;
+    }
+
+    movies = data;
+    refreshGenresFromMovies();
+
     document.getElementById('load-status').style.display = 'none';
     document.getElementById('grid').style.display = 'grid';
+    setSyncStatus('ok', 'synced');
 
-    buildGenreList();
     render();
     fetchAllPosters(); // runs quietly in the background, re-rendering as posters arrive
   }catch(err){
+    console.error(err);
+    setSyncStatus('err', 'sync error — check console');
     const el = document.getElementById('load-status');
     el.className = 'load-msg error';
-    el.textContent = "-- COULD NOT LOAD movies-data.json (serve this folder over http, e.g. GitHub Pages or 'python3 -m http.server') --";
+    el.textContent = "-- COULD NOT CONNECT TO DATABASE -- (" + (err.message || 'unknown error') + ")";
   }
+}
+
+async function toggleWatched(id, watched){
+  const m = movies.find(x=>x.id===id);
+  if(m) m.watched = watched;
+  render();
+  const { error } = await sb.from('movies').update({watched}).eq('id', id);
+  if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+}
+
+async function setRating(id, rating){
+  const m = movies.find(x=>x.id===id);
+  if(m) m.rating = rating || null;
+  render();
+  const { error } = await sb.from('movies').update({rating: rating || null}).eq('id', id);
+  if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+}
+
+async function addMovie(){
+  const titleEl = document.getElementById('add-title');
+  const genreEl = document.getElementById('add-genre');
+  const imageEl = document.getElementById('add-image');
+  const statusEl = document.getElementById('add-status');
+  const btn = document.getElementById('add-btn');
+
+  const title = titleEl.value.trim();
+  const genre = genreEl.value.trim().toUpperCase();
+  const image = imageEl.value.trim();
+
+  if(!title || !genre){
+    statusEl.textContent = 'title and genre are both required';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = 'adding...';
+  const { data, error } = await sb.from('movies')
+    .insert([{ title, genre, image, watched:false, rating:null, notes:'' }])
+    .select();
+  btn.disabled = false;
+
+  if(error){
+    console.error(error);
+    statusEl.textContent = 'failed to add — check console';
+    return;
+  }
+
+  movies.push(data[0]);
+  refreshGenresFromMovies();
+  render();
+  titleEl.value = '';
+  genreEl.value = '';
+  imageEl.value = '';
+  statusEl.textContent = `added "${title}"`;
+  if(!image) fetchAllPosters();
 }
 
 document.getElementById('search').addEventListener('input', e=>{
@@ -339,10 +532,18 @@ document.getElementById('search').addEventListener('input', e=>{
 document.getElementById('sidebar-toggle').addEventListener('click', ()=>{
   document.getElementById('layout').classList.toggle('sidebar-hidden');
 });
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    statusFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    render();
+  });
+});
+document.getElementById('add-btn').addEventListener('click', addMovie);
 
 loadPosterCache();
 buildThemeGrid();
-loadData();
+loadMovies();
 </script>
 </body>
 </html>
