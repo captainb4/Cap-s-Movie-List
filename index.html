@@ -107,47 +107,10 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .swatch{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor}
 
 @media(max-width:800px){
-  .layout{grid-template-columns:1fr}
-  header{padding:0 12px;gap:10px}
-  .header-logo{font-size:20px;letter-spacing:1px}
+  .layout{grid-template-columns:0 1fr}
+  .layout:not(.sidebar-hidden){grid-template-columns:220px 1fr}
   .header-right{display:none}
   .search-wrap{max-width:none}
-  .main{padding:16px 14px}
-
-  .sidebar{
-    position:fixed;top:56px;left:0;
-    width:82vw;max-width:300px;
-    height:calc(100vh - 56px);
-    z-index:200;
-    transform:translateX(0);
-    opacity:1;pointer-events:auto;
-    border-color:var(--border);
-    transition:transform .25s ease;
-    box-shadow:10px 0 30px rgba(0,0,0,.6);
-  }
-  .layout.sidebar-hidden .sidebar{
-    transform:translateX(-100%);
-  }
-  .sidebar-backdrop{
-    display:none;
-    position:fixed;inset:56px 0 0 0;
-    background:rgba(0,0,0,.55);
-    z-index:150;
-  }
-  .layout:not(.sidebar-hidden) .sidebar-backdrop{display:block}
-
-  .main-head{gap:8px}
-  .filter-row{width:100%;margin-left:0;order:3}
-  .filter-btn{flex:1;text-align:center;padding:7px 4px}
-
-  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-
-  /* bigger touch targets */
-  .star{font-size:19px}
-  .watched-toggle{font-size:10px;gap:6px}
-  .watched-toggle input{width:17px;height:17px}
-  .trailer-btn{padding:10px 6px;font-size:17px}
-  .card-controls{padding:2px 0}
 }
 </style>
 </head>
@@ -194,7 +157,6 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       <div class="scheme-grid" id="scheme-grid"></div>
     </div>
   </div>
-  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
   <div class="main">
     <div class="main-head">
@@ -379,9 +341,6 @@ function selectGenre(g){
   document.querySelectorAll('.genre-item').forEach(el=>el.classList.toggle('active', el.dataset.genre === g));
   document.getElementById('main-title').textContent = g === 'ALL' ? 'ALL TITLES' : g;
   render();
-  if(window.innerWidth <= 800){
-    document.getElementById('layout').classList.add('sidebar-hidden');
-  }
 }
 
 function escapeHtml(str){
@@ -573,12 +532,6 @@ document.getElementById('search').addEventListener('input', e=>{
 document.getElementById('sidebar-toggle').addEventListener('click', ()=>{
   document.getElementById('layout').classList.toggle('sidebar-hidden');
 });
-document.getElementById('sidebar-backdrop').addEventListener('click', ()=>{
-  document.getElementById('layout').classList.add('sidebar-hidden');
-});
-if(window.innerWidth <= 800){
-  document.getElementById('layout').classList.add('sidebar-hidden'); // start closed on mobile
-}
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     statusFilter = btn.dataset.filter;
