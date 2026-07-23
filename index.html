@@ -439,6 +439,50 @@ async function seedFromLocalJson(){
   if(error) throw error;
 }
 
+// Inserts any titles present in movies-data.json but missing from the database,
+// and updates the genre on existing rows whose genre changed in the JSON.
+// This lets edits to the local JSON file sync in on every load, not just the very first run.
+async function syncNewFromLocalJson(existingRows){
+  const res = await fetch('movies-data.json');
+  if(!res.ok) return; // no local file to diff against, nothing to do
+
+  const data = await res.json();
+  const jsonMovies = data.movies || [];
+
+  const existingByTitle = new Map(existingRows.map(r => [r.title, r]));
+
+  const newRows = jsonMovies
+    .filter(m => !existingByTitle.has(m.title))
+    .map(m => ({
+      title: m.title,
+      genre: m.genre,
+      image: m.image || '',
+      watched: false,
+      rating: null,
+      notes: ''
+    }));
+
+  const genreUpdates = jsonMovies.filter(m => {
+    const existing = existingByTitle.get(m.title);
+    return existing && existing.genre !== m.genre;
+  });
+
+  if(newRows.length){
+    setSyncStatus('', `found ${newRows.length} new title(s) — syncing...`);
+    const { error } = await sb.from('movies').insert(newRows);
+    if(error) throw error;
+  }
+
+  if(genreUpdates.length){
+    setSyncStatus('', `updating ${genreUpdates.length} genre(s)...`);
+    for(const m of genreUpdates){
+      const existing = existingByTitle.get(m.title);
+      const { error } = await sb.from('movies').update({ genre: m.genre }).eq('id', existing.id);
+      if(error) throw error;
+    }
+  }
+}
+
 async function loadMovies(){
   try{
     setSyncStatus('', 'connecting to database...');
@@ -448,6 +492,10 @@ async function loadMovies(){
     if(!data || data.length === 0){
       setSyncStatus('', 'first run — importing your list...');
       await seedFromLocalJson();
+      ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
+      if(error) throw error;
+    } else {
+      await syncNewFromLocalJson(data);
       ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
       if(error) throw error;
     }
