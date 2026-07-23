@@ -49,8 +49,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .main-title{font-family:'VT323',monospace;font-size:26px;color:var(--accent);letter-spacing:2px;transition:color .2s}
 .main-sub{font-size:11px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
-.card{border:1px solid var(--border);background:var(--surface);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;transition:all .15s;cursor:default}
-.card:hover{border-color:var(--card-color,var(--accent));transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.card{border:1px solid var(--border);background:var(--surface);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;cursor:default;transform:scale(1);will-change:transform}
+.card:hover{border-color:var(--card-color,var(--accent));transform:scale(1.035);box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2;position:relative}
 .poster{aspect-ratio:2/3;position:relative;overflow:hidden;background:var(--bg)}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;background:linear-gradient(160deg,var(--card-color,var(--accent)) 0%, var(--bg) 78%);}
 .poster-fallback::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(0,0,0,0) 0 8px,rgba(0,0,0,.12) 8px 9px);}
@@ -91,6 +91,10 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .streaming-label{letter-spacing:1px}
 .streaming-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .streaming-logo{width:22px;height:22px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.streaming-link{display:inline-flex;text-decoration:none;transition:transform .1s ease,filter .1s ease}
+.streaming-link:hover{transform:scale(1.12);filter:brightness(1.15)}
+.streaming-link .streaming-pill{cursor:pointer}
+.streaming-link .streaming-pill:hover{border-color:var(--card-color,var(--accent));color:var(--card-color,var(--accent))}
 .streaming-pill{padding:2px 6px;border:1px solid var(--border);border-radius:2px;font-size:9px;color:var(--text);background:var(--surface2)}
 
 /* filter row */
@@ -569,10 +573,15 @@ function render(){
         const provs = hasFlat ? info.flatrate : (hasRent ? info.rent : info.buy);
         if(provs && provs.length){
           const label = hasFlat ? 'STREAMING:' : (hasRent ? 'RENT:' : 'BUY:');
-          const badges = provs.map(p => p.logo
-            ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'streaming-pill',textContent:'${escapeHtml(p.name)}'}))">`
-            : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`
-          ).join('');
+          const linkHref = info.link ? escapeHtml(info.link) : '';
+          const badges = provs.map(p => {
+            const inner = p.logo
+              ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'streaming-pill',textContent:'${escapeHtml(p.name)}'}))">`
+              : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`;
+            return linkHref
+              ? `<a class="streaming-link" href="${linkHref}" target="_blank" rel="noopener" title="watch on ${escapeHtml(p.name)}">${inner}</a>`
+              : inner;
+          }).join('');
           streamingHtml = `<div class="streaming-row"><span class="streaming-label">${label}</span><div class="streaming-badges">${badges}</div></div>`;
         } else {
           streamingHtml = `<div class="streaming-row none">not available to stream (${STREAM_REGION})</div>`;
