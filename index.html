@@ -68,6 +68,12 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .load-msg{font-family:'VT323',monospace;font-size:18px;color:var(--muted);letter-spacing:2px;padding:60px 0;text-align:center}
 .load-msg.error{color:var(--accent2)}
 
+@keyframes randomPulse{
+  0%,100%{box-shadow:0 0 0 2px var(--card-color,var(--accent)),0 8px 20px rgba(0,0,0,.4)}
+  50%{box-shadow:0 0 0 2px var(--card-color,var(--accent)),0 0 26px 4px var(--card-color,var(--accent))}
+}
+.card.random-pick{animation:randomPulse 1s ease-in-out 3;border-color:var(--card-color,var(--accent))}
+
 /* watched toggle + stars */
 .card-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .watched-toggle{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;font-size:9px;letter-spacing:.5px;color:var(--muted)}
@@ -190,6 +196,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <button class="filter-btn active" data-filter="all">ALL</button>
         <button class="filter-btn" data-filter="watched">WATCHED</button>
         <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
+        <button class="filter-btn" id="random-btn" title="pick a random movie from the current view">🎲 RANDOM</button>
       </div>
       <div class="sort-row">
         <span class="sort-label">SORT:</span>
@@ -432,16 +439,20 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-function render(){
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
+function getFilteredMovies(){
   const q = query.trim().toLowerCase();
-  let filtered = movies.filter(m=>{
+  return movies.filter(m=>{
     const genreOk = activeGenre === 'ALL' || m.genre === activeGenre;
     const searchOk = !q || m.title.toLowerCase().includes(q);
     const statusOk = statusFilter === 'all' || (statusFilter === 'watched' ? m.watched : !m.watched);
     return genreOk && searchOk && statusOk;
   });
+}
+
+function render(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  let filtered = getFilteredMovies();
 
   if(sortMode === 'recent' || sortMode === 'longago'){
     filtered = filtered.filter(m => m.watched && m.watched_at);
@@ -461,6 +472,7 @@ function render(){
     const cleanTitle = escapeHtml(m.title.replace(/\*\(.*?\)\*/g,'').trim());
     const card = document.createElement('div');
     card.className = 'card' + (editMode ? ' edit-mode' : '');
+    card.dataset.id = m.id;
     card.style.setProperty('--card-color', color);
     const cached = posterCache[m.title];
     const posterUrl = m.image || (cached && cached.poster) || '';
@@ -717,6 +729,29 @@ async function addMovie(){
   statusEl.textContent = `added "${title}"${franchiseNote}`;
   if(data.some(d=>!d.image)) fetchAllPosters();
 }
+
+function pickRandomMovie(){
+  const pool = getFilteredMovies();
+  if(pool.length === 0){
+    const statusEl = document.getElementById('add-status');
+    if(statusEl) statusEl.textContent = 'no movies match the current filters to pick from';
+    return;
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+
+  // clear the search/status filters that might be hiding the pick isn't needed —
+  // it was already drawn from the currently-filtered pool, so it's on screen.
+  render();
+  const card = document.querySelector(`.card[data-id="${pick.id}"]`);
+  if(card){
+    card.classList.remove('random-pick'); void card.offsetWidth; // restart animation if clicked twice
+    card.classList.add('random-pick');
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(()=> card.classList.remove('random-pick'), 3200);
+  }
+}
+
+document.getElementById('random-btn').addEventListener('click', pickRandomMovie);
 
 document.getElementById('search').addEventListener('input', e=>{
   query = e.target.value;
