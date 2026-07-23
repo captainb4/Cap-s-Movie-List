@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Cap-s-Movie-List
-
-=======
 # CAP'S MOVIE LIST
 
 A dark-mode movie browser that blends a curated personal list with live movie data from The Movie Database (TMDB).
@@ -47,4 +43,3 @@ This project is maintained as a fork of [captainb4/Cap-s-Movie-List](https://git
 ## License
 
 Same as original repository.
->>>>>>> e8beaca (feat: live TMDB movie data integration with terminal aesthetic)

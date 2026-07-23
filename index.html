@@ -682,7 +682,7 @@ header{
   <div class="main">
     <div class="main-head">
       <div class="main-title" id="main-title">ALL TITLES</div>
-      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
+      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span> <button id="force-sync-btn" style="margin-left:8px;font-size:10px;padding:2px 8px;cursor:pointer;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:2px;">RE-SYNC FROM JSON</button></div>
       <div class="filter-row">
         <button class="filter-btn active" data-filter="all">ALL</button>
         <button class="filter-btn" data-filter="watched">WATCHED</button>
@@ -697,6 +697,13 @@ header{
 </div>
 
 <script>
+/* ===== Error capture ===== */
+window.addEventListener('error', e => {
+  console.error('[page-error]', e.message, 'at', e.filename + ':' + e.lineno + ':' + e.colno);
+  const el = document.getElementById('load-status');
+  if(el) el.textContent = '-- JS ERROR: ' + e.message + ' (line ' + e.lineno + ') --';
+});
+
 /* ===== Genre accent palette ===== */
 const GENRE_PALETTE = ['#aaff44','#ff4466','#44aaff','#ffaa22','#bb66ff','#22ffcc','#ff6688','#88ff22'];
 
@@ -728,7 +735,16 @@ let tmdbPage = 1;
 /* ===== Supabase ===== */
 const SUPABASE_URL = 'https://obaspmovyztvvqhymdcc.supabase.co';
 const SUPABASE_KEY = 'sb_publicable_ZAwF4Uav1pAZMVaKAwcRXg_hT3wHBr3';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let sb = null;
+try{
+  if(window.supabase){
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }else{
+    console.warn('[supabase] CDN script not loaded — running in offline mode. Personal list sync disabled; live TMDB data still works.');
+  }
+}catch(e){
+  console.warn('[supabase] Failed to create client:', e.message, '— running in offline mode.');
+}
 
 /* ===== TMDB ===== */
 const TMDB_API_KEY = '4aaf24ed48c1399968b2c9ac0d66278b';
@@ -951,7 +967,7 @@ function render(){
       : '';
     const rating = m.rating_user || m.rating || 0;
     const starsHtml = [1,2,3,4,5].map(n=>
-      `<span class="star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}" data-source="${m.source || 'personal}">★</span>`
+      `<span class="star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}" data-source="${m.source || 'personal'}">★</span>`
     ).join('');
 
     // Build meta info
@@ -1120,6 +1136,41 @@ async function syncNewFromLocalJson(existingRows){
 }
 
 async function loadMovies(){
+  if(!sb){
+    // Offline mode — try to load from local JSON file
+    setSyncStatus('', 'offline — loading local data...');
+    try{
+      const res = await fetch('movies-data.json');
+      if(res.ok){
+        const data = await res.json();
+        movies = (data.movies || []).map((m, i) => ({
+          id: m.id || i + 1,
+          title: m.title,
+          genre: m.genre || 'UNCATEGORIZED',
+          image: m.image || '',
+          watched: false,
+          rating: null,
+          notes: '',
+          source: 'local'
+        }));
+        refreshGenresFromMovies();
+        document.getElementById('load-status').style.display = 'none';
+        document.getElementById('grid').style.display = 'grid';
+        setSyncStatus('err', `offline — ${movies.length} titles (no cloud sync)`);
+        render();
+        fetchAllPosters();
+        return;
+      }
+    }catch(e){
+      console.warn('[loadMovies] local JSON load failed:', e.message);
+    }
+    // No local file either — show message and enable grid for TMDB
+    document.getElementById('load-status').textContent = '-- NO DATABASE CONNECTED -- Click LIVE DATA to browse movies from TMDB.';
+    document.getElementById('load-status').className = 'load-msg';
+    setSyncStatus('err', 'offline — no database');
+    return;
+  }
+
   try{
     setSyncStatus('', 'connecting to database...');
     let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
@@ -1166,6 +1217,7 @@ async function toggleWatched(id, watched){
   const m = movies.find(x=>x.id===id);
   if(m) m.watched = watched;
   render();
+  if(!sb) return;
   const { error } = await sb.from('movies').update({watched}).eq('id', id);
   if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
 }
@@ -1174,6 +1226,7 @@ async function setRating(id, rating){
   const m = movies.find(x=>x.id===id);
   if(m) m.rating_user = rating || null;
   render();
+  if(!sb) return;
   const { error } = await sb.from('movies').update({rating: rating || null}).eq('id', id);
   if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
 }
@@ -1191,6 +1244,24 @@ async function addMovie(){
 
   if(!title || !genre){
     statusEl.textContent = 'title and genre are both required';
+    return;
+  }
+
+  if(!sb){
+    // Offline mode — add locally only
+    const newMovie = {
+      id: Date.now(),
+      title, genre, image, watched: false,
+      rating: null, notes: '', source: 'local'
+    };
+    movies.push(newMovie);
+    refreshGenresFromMovies();
+    render();
+    titleEl.value = '';
+    genreEl.value = '';
+    imageEl.value = '';
+    statusEl.textContent = `added "${title}" (offline)`;
+    if(!image) fetchAllPosters();
     return;
   }
 
@@ -1234,7 +1305,7 @@ async function fetchAllPosters(){
     savePosterCache();
     if(url){
       m.image = url;
-      if(m.source !== 'tmdb'){
+      if(m.source !== 'tmdb' && sb){
         sb.from('movies').update({image:url}).eq('id', m.id).then(()=>{});
       }
       render();
@@ -1290,7 +1361,7 @@ function switchView(view){
 function switchTmdbTab(tab){
   tmdbTab = tab;
   tmdbPage = 1;
-  document.querySelectorAll('[data-tmdb-tab]').forEach(b=>b.classList.toggle('active', b.dataset-tmdb-tab === tab));
+  document.querySelectorAll('[data-tmdb-tab]').forEach(b=>b.classList.toggle('active', b.getAttribute('data-tmdb-tab') === tab));
   if(currentView === 'tmdb'){
     loadTmdbMovies().then(()=>{
       render();
@@ -1319,6 +1390,10 @@ document.querySelectorAll('.filter-btn[data-filter]').forEach(btn=>{
 document.getElementById('add-btn').addEventListener('click', addMovie);
 
 document.getElementById('force-sync-btn').addEventListener('click', async ()=>{
+  if(!sb){
+    setSyncStatus('err', 'offline — sync unavailable (no database)');
+    return;
+  }
   const btn = document.getElementById('force-sync-btn');
   btn.disabled = true;
   const prevLabel = btn.textContent;
