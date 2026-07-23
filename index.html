@@ -681,7 +681,7 @@ header{
     <div class="panel">
       <div class="panel-title">VIEW</div>
       <div class="view-toggle" id="view-toggle">
-        <button class="view-btn" data-view="personal">MY LIST</button>
+        <button class="view-btn" data-view="personal">NON-LIVE DATA</button>
         <button class="view-btn active" data-view="tmdb">LIVE DATA</button>
       </div>
     </div>
@@ -989,6 +989,7 @@ function selectGenre(g){
   activeGenre = g;
   document.querySelectorAll('.genre-item').forEach(el=>el.classList.toggle('active', el.dataset.genre === g));
   document.getElementById('main-title').textContent = g === 'ALL' ? 'ALL TITLES' : g;
+  if(currentView === 'personal' && g === 'ALL') document.getElementById('main-title').textContent = 'NON-LIVE DATA';
   render();
 }
 
@@ -1188,80 +1189,57 @@ async function syncNewFromLocalJson(existingRows){
 }
 
 async function loadMovies(){
-  if(!sb){
-    // Offline mode — try to load from local JSON file
-    setSyncStatus('', 'offline — loading local data...');
-    try{
-      const res = await fetch('movies-data.json');
-      if(res.ok){
-        const data = await res.json();
-        movies = (data.movies || []).map((m, i) => ({
-          id: m.id || i + 1,
-          title: m.title,
-          genre: m.genre || 'UNCATEGORIZED',
-          image: m.image || '',
-          watched: false,
-          rating: null,
-          notes: '',
-          source: 'local'
-        }));
-        refreshGenresFromMovies();
-        document.getElementById('load-status').style.display = 'none';
-        document.getElementById('grid').style.display = 'grid';
-        setSyncStatus('err', `offline — ${movies.length} titles (no cloud sync)`);
-        render();
-        fetchAllPosters();
-        return;
-      }
-    }catch(e){
-      console.warn('[loadMovies] local JSON load failed:', e.message);
+  // Non-live data: always load from movies-data.json (the file that ships with the repo)
+  setSyncStatus('', 'loading non-live data...');
+  try{
+    const res = await fetch('movies-data.json');
+    if(res.ok){
+      const data = await res.json();
+      movies = (data.movies || []).map((m, i) => ({
+        id: m.id || i + 1,
+        title: m.title,
+        genre: m.genre || 'UNCATEGORIZED',
+        image: m.image || '',
+        watched: false,
+        rating: null,
+        notes: '',
+        source: 'local'
+      }));
+      refreshGenresFromMovies();
+      setSyncStatus('ok', `non-live — ${movies.length} titles from local file`);
+      render();
+      fetchAllPosters();
     }
-    // No local file either — show message and enable grid for TMDB
-    document.getElementById('load-status').textContent = '-- NO DATABASE CONNECTED -- Click LIVE DATA to browse movies from TMDB.';
-    document.getElementById('load-status').className = 'load-msg';
-    setSyncStatus('err', 'offline — no database');
-    return;
+  }catch(e){
+    console.warn('[loadMovies] local JSON load failed:', e.message);
+    setSyncStatus('err', 'no local data file found');
   }
 
-  try{
-    setSyncStatus('', 'connecting to database...');
-    let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
-    if(error) throw error;
-
-    let syncResult = null;
-    if(!data || data.length === 0){
-      setSyncStatus('', 'first run — importing your list...');
-      await seedFromLocalJson();
-      ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
+  // If Supabase is available, try to sync additional movies on top of the local data
+  if(sb){
+    try{
+      let { data, error } = await sb.from('movies').select('*').order('id', {ascending:true});
       if(error) throw error;
-    } else {
-      syncResult = await syncNewFromLocalJson(data);
-      ({ data, error } = await sb.from('movies').select('*').order('id', {ascending:true}));
-      if(error) throw error;
+
+      if(data && data.length > 0){
+        // Merge Supabase data with local data (prefer Supabase for watched/rating state)
+        const localByTitle = new Map(movies.map(m => [m.title, m]));
+        data.forEach(row => {
+          const local = localByTitle.get(row.title);
+          if(local){
+            local.watched = row.watched;
+            local.rating_user = row.rating;
+            local.id = row.id;
+          }
+        });
+        refreshGenresFromMovies();
+        setSyncStatus('ok', `non-live — ${movies.length} titles (synced with cloud)`);
+        if(currentView === 'personal') render();
+      }
+    }catch(err){
+      console.warn('[loadMovies] Supabase sync failed, using local data only:', err.message);
+      // Already loaded from JSON — keep it
     }
-
-    movies = data;
-    refreshGenresFromMovies();
-
-    document.getElementById('load-status').style.display = 'none';
-    document.getElementById('grid').style.display = 'grid';
-
-    if(syncResult && (syncResult.insertFailed.length || syncResult.updateFailed.length)){
-      setSyncStatus('err', `synced with errors — ${syncResult.insertFailed.length + syncResult.updateFailed.length} row(s) failed, see console`);
-    } else if(syncResult && (syncResult.insertedCount || syncResult.updatedCount)){
-      setSyncStatus('ok', `synced (+${syncResult.insertedCount} new, ${syncResult.updatedCount} updated)`);
-    } else {
-      setSyncStatus('ok', `synced — ${movies.length} titles`);
-    }
-
-    render();
-    fetchAllPosters();
-  }catch(err){
-    console.error(err);
-    setSyncStatus('err', 'sync error — check console');
-    const el = document.getElementById('load-status');
-    el.className = 'load-msg error';
-    el.textContent = "-- COULD NOT CONNECT TO DATABASE -- (" + (err.message || 'unknown error') + ")";
   }
 }
 
@@ -1390,7 +1368,7 @@ function tmdbQueryFor(title){
 function switchView(view){
   currentView = view;
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
-  document.getElementById('main-title').textContent = view === 'tmdb' ? 'LIVE MOVIES' : 'ALL TITLES';
+  document.getElementById('main-title').textContent = view === 'tmdb' ? 'LIVE MOVIES' : 'NON-LIVE DATA';
 
   if(view === 'personal'){
     document.getElementById('load-status').style.display = 'none';
