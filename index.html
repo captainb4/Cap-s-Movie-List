@@ -149,8 +149,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .group-rating{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.3px;white-space:nowrap;cursor:default}
 
 /* theme panel */
-.theme-panel{margin-top:auto}
-.sidebar.all-collapsed .theme-panel{margin-top:0}
+.theme-panel{margin-top:0}
+.sidebar.genres-open .theme-panel{margin-top:auto}
 .scheme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .scheme-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .1s;background:var(--surface2);font-size:9px;color:var(--muted);letter-spacing:.5px}
 .scheme-btn:hover{color:var(--text);border-color:var(--border)}
@@ -909,8 +909,9 @@ function applyPanelCollapseState(){
   panels.forEach(panel=>{
     panel.classList.toggle('collapsed', !!collapsedPanels[panel.dataset.panel]);
   });
-  const allCollapsed = panels.length > 0 && Array.from(panels).every(p => p.classList.contains('collapsed'));
-  document.getElementById('sidebar').classList.toggle('all-collapsed', allCollapsed);
+  const genresPanel = document.querySelector('.panel[data-panel="genres"]');
+  const genresOpen = !!genresPanel && !genresPanel.classList.contains('collapsed');
+  document.getElementById('sidebar').classList.toggle('genres-open', genresOpen);
 }
 function initCollapsiblePanels(){
   loadCollapsedPanels();
