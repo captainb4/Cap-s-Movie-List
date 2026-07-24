@@ -167,6 +167,29 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   </header>
 
   <div class="sidebar" id="sidebar">
+    <div class="panel" id="account-panel">
+      <div class="panel-title">ACCOUNT</div>
+      <div id="account-logged-out">
+        <div class="add-field">
+          <span class="add-label">EMAIL</span>
+          <input type="email" id="account-email" class="add-input" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="add-field">
+          <span class="add-label">PASSWORD</span>
+          <input type="password" id="account-password" class="add-input" placeholder="min 6 characters" autocomplete="current-password">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="add-btn" id="account-signup-btn" style="flex:1">SIGN UP</button>
+          <button class="add-btn" id="account-login-btn" style="flex:1">LOG IN</button>
+        </div>
+        <div class="add-status" id="account-status"></div>
+      </div>
+      <div id="account-logged-in" style="display:none">
+        <div class="add-status" style="margin-top:0">signed in as <span id="account-email-display"></span></div>
+        <button class="add-btn" id="account-logout-btn">LOG OUT</button>
+        <div class="add-status">your watched status &amp; ratings now sync to your account instead of the shared list.</div>
+      </div>
+    </div>
     <div class="panel">
       <div class="panel-title">+ ADD MOVIE</div>
       <div class="add-field">
@@ -223,7 +246,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it — both save straight to the database and sync across any device you open this on. Toggle 📺 STREAMING to see where each title is available (US region); this data is sourced from JustWatch via TMDB and may take a moment to load the first time.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched/ratings are shared publicly with anyone using this list. Toggle 📺 STREAMING to see where each title is available (US region); this data is sourced from JustWatch via TMDB and may take a moment to load the first time.</div>
   </div>
 </div>
 
@@ -252,6 +275,7 @@ let sortMode = 'default';
 let query = '';
 let activeTheme = 0;
 let editMode = false;
+let currentUser = null;
 
 // old title -> cleaned-up genre. Applied once per row on load to migrate
 // existing Supabase rows without needing manual SQL edits.
@@ -261,6 +285,68 @@ const GENRE_MIGRATION_MAP = {"Uncharted": "ACTION", "Gone in 60 Seconds": "ACTIO
 const SUPABASE_URL = 'https://obaspmovyztvvqhymdcc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZAwF4Uav1pAZMVaKAwcRXg_hT3wHBr3';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ---- accounts (per-user watched status + ratings, stored in the user_movie_status table) ----
+function updateAccountUI(){
+  const loggedOutEl = document.getElementById('account-logged-out');
+  const loggedInEl = document.getElementById('account-logged-in');
+  if(currentUser){
+    loggedOutEl.style.display = 'none';
+    loggedInEl.style.display = 'block';
+    document.getElementById('account-email-display').textContent = currentUser.email;
+  } else {
+    loggedOutEl.style.display = 'block';
+    loggedInEl.style.display = 'none';
+    document.getElementById('account-status').textContent = '';
+  }
+}
+
+// pulls this user's personal watched/rating rows and overlays them onto the
+// in-memory movie list (each account has its own status, independent of the
+// shared catalog's legacy watched/rating columns used by guests)
+async function loadUserStatus(){
+  if(!currentUser) return;
+  const { data, error } = await sb.from('user_movie_status').select('*').eq('user_id', currentUser.id);
+  if(error){ console.error(error); setSyncStatus('err','could not load your ratings — check console'); return; }
+  const map = {};
+  (data || []).forEach(row => { map[row.movie_id] = row; });
+  movies.forEach(m=>{
+    const row = map[m.id];
+    m.watched = row ? !!row.watched : false;
+    m.watched_at = row ? row.watched_at : null;
+    m.rating = row ? (row.rating || null) : null;
+  });
+}
+
+async function handleSignUp(){
+  const email = document.getElementById('account-email').value.trim();
+  const password = document.getElementById('account-password').value;
+  const statusEl = document.getElementById('account-status');
+  if(!email || !password){ statusEl.textContent = 'enter an email and password.'; return; }
+  if(password.length < 6){ statusEl.textContent = 'password must be at least 6 characters.'; return; }
+  statusEl.textContent = 'creating account...';
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if(error){ statusEl.textContent = 'error: ' + error.message; return; }
+  statusEl.textContent = data.session
+    ? ''
+    : 'account created — check your email to confirm it, then log in.';
+}
+
+async function handleLogIn(){
+  const email = document.getElementById('account-email').value.trim();
+  const password = document.getElementById('account-password').value;
+  const statusEl = document.getElementById('account-status');
+  if(!email || !password){ statusEl.textContent = 'enter an email and password.'; return; }
+  statusEl.textContent = 'logging in...';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ statusEl.textContent = 'error: ' + error.message; return; }
+  statusEl.textContent = '';
+}
+
+async function handleLogOut(){
+  await sb.auth.signOut();
+}
+
 
 function trailerUrlFor(title){
   const clean = title.replace(/\*\(.*?\)\*/g,'').trim();
@@ -784,16 +870,28 @@ async function toggleWatched(id, watched){
   const watched_at = watched ? new Date().toISOString() : null;
   if(m){ m.watched = watched; m.watched_at = watched_at; }
   render();
-  const { error } = await sb.from('movies').update({watched, watched_at}).eq('id', id);
-  if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  if(currentUser){
+    const { error } = await sb.from('user_movie_status')
+      .upsert({ user_id: currentUser.id, movie_id: id, watched, watched_at }, { onConflict: 'user_id,movie_id' });
+    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  } else {
+    const { error } = await sb.from('movies').update({watched, watched_at}).eq('id', id);
+    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  }
 }
 
 async function setRating(id, rating){
   const m = movies.find(x=>x.id===id);
   if(m) m.rating = rating || null;
   render();
-  const { error } = await sb.from('movies').update({rating: rating || null}).eq('id', id);
-  if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  if(currentUser){
+    const { error } = await sb.from('user_movie_status')
+      .upsert({ user_id: currentUser.id, movie_id: id, rating: rating || null }, { onConflict: 'user_id,movie_id' });
+    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  } else {
+    const { error } = await sb.from('movies').update({rating: rating || null}).eq('id', id);
+    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+  }
 }
 
 async function updateMovieField(id, field, rawValue){
@@ -946,12 +1044,42 @@ document.querySelectorAll('.sort-btn').forEach(btn=>{
   });
 });
 document.getElementById('add-btn').addEventListener('click', addMovie);
+document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
+document.getElementById('account-login-btn').addEventListener('click', handleLogIn);
+document.getElementById('account-logout-btn').addEventListener('click', handleLogOut);
+[document.getElementById('account-email'), document.getElementById('account-password')].forEach(el=>{
+  el.addEventListener('keydown', e=>{ if(e.key === 'Enter') handleLogIn(); });
+});
 
 loadPosterCache();
 loadStreamingCache();
 loadReleaseDateCache();
 buildThemeGrid();
-loadMovies();
+
+(async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  currentUser = session ? session.user : null;
+  updateAccountUI();
+
+  await loadMovies(); // always loads the shared catalog (titles/posters/genres) first
+  if(currentUser){
+    await loadUserStatus(); // then layers this account's personal watched/ratings on top
+    render();
+  }
+
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === 'SIGNED_IN'){
+      currentUser = session.user;
+      updateAccountUI();
+      loadUserStatus().then(render);
+    } else if(event === 'SIGNED_OUT'){
+      currentUser = null;
+      updateAccountUI();
+      loadMovies(); // revert to the shared/guest view
+    }
+  });
+})();
+
 </script>
 </body>
 </html>
