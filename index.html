@@ -192,27 +192,30 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     </div>
     <div class="panel">
       <div class="panel-title">+ ADD MOVIE</div>
-      <div class="add-field">
-        <span class="add-label">TITLE</span>
-        <input type="text" id="add-title" class="add-input" placeholder="movie title...">
+      <div id="add-movie-locked" class="add-status" style="margin-top:0">sign in above to add movies to the list.</div>
+      <div id="add-movie-form" style="display:none">
+        <div class="add-field">
+          <span class="add-label">TITLE</span>
+          <input type="text" id="add-title" class="add-input" placeholder="movie title...">
+        </div>
+        <div class="add-field">
+          <span class="add-label">GENRE</span>
+          <input type="text" id="add-genre" class="add-input" placeholder="e.g. ACTION (existing or new)" list="genre-options">
+          <datalist id="genre-options"></datalist>
+        </div>
+        <div class="add-field">
+          <span class="add-label">POSTER URL (optional)</span>
+          <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
+        </div>
+        <div class="add-field">
+          <label class="watched-toggle" for="add-franchise" style="cursor:pointer">
+            <input type="checkbox" id="add-franchise">
+            <span>ALSO ADD REST OF FRANCHISE (via TMDB)</span>
+          </label>
+        </div>
+        <button class="add-btn" id="add-btn">ADD TO LIST</button>
+        <div class="add-status" id="add-status"></div>
       </div>
-      <div class="add-field">
-        <span class="add-label">GENRE</span>
-        <input type="text" id="add-genre" class="add-input" placeholder="e.g. ACTION (existing or new)" list="genre-options">
-        <datalist id="genre-options"></datalist>
-      </div>
-      <div class="add-field">
-        <span class="add-label">POSTER URL (optional)</span>
-        <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
-      </div>
-      <div class="add-field">
-        <label class="watched-toggle" for="add-franchise" style="cursor:pointer">
-          <input type="checkbox" id="add-franchise">
-          <span>ALSO ADD REST OF FRANCHISE (via TMDB)</span>
-        </label>
-      </div>
-      <button class="add-btn" id="add-btn">ADD TO LIST</button>
-      <div class="add-status" id="add-status"></div>
     </div>
     <div class="panel">
       <div class="panel-title">GENRES</div>
@@ -295,18 +298,37 @@ const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 function usernameToAuthEmail(username){ return username.toLowerCase() + '@' + USERNAME_AUTH_DOMAIN; }
 function authEmailToUsername(email){ return (email || '').split('@')[0]; }
 
+// admin status now lives in the "profiles" table (is_admin column) instead of
+// being hardcoded to a username — fetched fresh on login, see loadUserProfile()
+let currentIsAdmin = false;
+function isAdmin(){ return !!currentUser && currentIsAdmin; }
+
+async function loadUserProfile(){
+  if(!currentUser){ currentIsAdmin = false; return; }
+  const { data, error } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).maybeSingle();
+  if(error){ console.error(error); currentIsAdmin = false; return; }
+  currentIsAdmin = !!(data && data.is_admin);
+}
+
 function updateAccountUI(){
   const loggedOutEl = document.getElementById('account-logged-out');
   const loggedInEl = document.getElementById('account-logged-in');
+  const addLockedEl = document.getElementById('add-movie-locked');
+  const addFormEl = document.getElementById('add-movie-form');
   if(currentUser){
     loggedOutEl.style.display = 'none';
     loggedInEl.style.display = 'block';
     document.getElementById('account-username-display').textContent = authEmailToUsername(currentUser.email);
+    addLockedEl.style.display = 'none';
+    addFormEl.style.display = 'block';
   } else {
     loggedOutEl.style.display = 'block';
     loggedInEl.style.display = 'none';
     document.getElementById('account-status').textContent = '';
+    addLockedEl.style.display = 'block';
+    addFormEl.style.display = 'none';
   }
+  render(); // admin-only delete button visibility depends on login state too
 }
 
 // pulls this user's personal watched/rating rows and overlays them onto the
@@ -750,7 +772,7 @@ function render(){
         <input type="text" class="add-input edit-field" data-id="${m.id}" data-field="genre" value="${escapeHtml(m.genre)}" list="genre-options">
         <span class="add-label">POSTER URL</span>
         <input type="text" class="add-input edit-field" data-id="${m.id}" data-field="image" value="${escapeHtml(m.image||'')}" placeholder="paste poster URL, or leave blank to auto-fetch">
-        <button class="edit-delete-btn" data-id="${m.id}">✕ DELETE MOVIE</button>
+        ${isAdmin() ? `<button class="edit-delete-btn" data-id="${m.id}">✕ DELETE MOVIE</button>` : `<div class="add-status" style="margin-top:8px">only the admin account can delete movies.</div>`}
       </div>
     ` : `
       <div class="card-title">${escapeHtml(m.title)}</div>
@@ -932,6 +954,7 @@ async function updateMovieField(id, field, rawValue){
 }
 
 async function deleteMovie(id){
+  if(!isAdmin()){ setSyncStatus('err','only the admin account can delete movies'); return; }
   movies = movies.filter(x=>x.id!==id);
   refreshGenresFromMovies();
   render();
@@ -941,6 +964,8 @@ async function deleteMovie(id){
 }
 
 async function addMovie(){
+  if(!currentUser){ return; } // UI is hidden for guests; this is just defense in depth
+
   const titleEl = document.getElementById('add-title');
   const genreEl = document.getElementById('add-genre');
   const imageEl = document.getElementById('add-image');
@@ -1080,7 +1105,7 @@ buildThemeGrid();
 
   await loadMovies(); // always loads the shared catalog (titles/posters/genres) first
   if(currentUser){
-    await loadUserStatus(); // then layers this account's personal watched/ratings on top
+    await Promise.all([loadUserStatus(), loadUserProfile()]); // personal watched/ratings + admin flag
     render();
   }
 
@@ -1088,9 +1113,10 @@ buildThemeGrid();
     if(event === 'SIGNED_IN'){
       currentUser = session.user;
       updateAccountUI();
-      loadUserStatus().then(render);
+      Promise.all([loadUserStatus(), loadUserProfile()]).then(render);
     } else if(event === 'SIGNED_OUT'){
       currentUser = null;
+      currentIsAdmin = false;
       updateAccountUI();
       loadMovies(); // revert to the shared/guest view
     }
