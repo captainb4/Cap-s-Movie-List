@@ -642,10 +642,15 @@ function renderModal(){
     const provs = hasFlat ? info.flatrate : (hasRent ? info.rent : info.buy);
     if(provs && provs.length){
       const label = hasFlat ? 'STREAMING:' : (hasRent ? 'RENT:' : 'BUY:');
-      const badges = provs.map(p => p.logo
-        ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}">`
-        : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`
-      ).join('');
+      const linkHref = info.link ? escapeHtml(info.link) : '';
+      const badges = provs.map(p => {
+        const inner = p.logo
+          ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'streaming-pill',textContent:'${escapeHtml(p.name)}'}))">`
+          : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`;
+        return linkHref
+          ? `<a class="streaming-link" href="${linkHref}" target="_blank" rel="noopener" title="watch on ${escapeHtml(p.name)}">${inner}</a>`
+          : inner;
+      }).join('');
       streamingHtml = `<div class="streaming-row"><span class="streaming-label">${label}</span><div class="streaming-badges">${badges}</div></div>`;
     } else {
       streamingHtml = `<div class="streaming-row none">not available to stream (${STREAM_REGION})</div>`;
