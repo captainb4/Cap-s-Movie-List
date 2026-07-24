@@ -294,7 +294,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <span class="sort-label">SORT:</span>
         <button class="sort-btn active" data-sort="default">DEFAULT</button>
         <button class="sort-btn" data-sort="watched-date">RECENTLY WATCHED <span class="sort-dir" id="sort-dir-indicator">↓</span></button>
-        <button class="sort-btn" data-sort="release">RELEASE DATE</button>
+        <button class="sort-btn" data-sort="release">RELEASE DATE <span class="sort-dir" id="release-sort-dir-indicator">↓</span></button>
         <button class="sort-btn" data-sort="rating">MY RATING</button>
         <button class="sort-btn" data-sort="group-rating">GROUP RATING</button>
       </div>
@@ -402,6 +402,7 @@ let activeGenre = 'ALL';
 let statusFilter = 'all';
 let sortMode = 'default';
 let sortDirection = 'recent'; // 'recent' = most-recently-watched first, 'longago' = watched longest ago first — only used when sortMode is 'watched-date'
+let releaseSortDirection = 'newest'; // 'newest' = newest releases first, 'oldest' = oldest releases first — only used when sortMode is 'release'
 let query = '';
 let activeTheme = 0;
 let editMode = false;
@@ -1196,7 +1197,8 @@ function render(){
       if(!da && !db) return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
       if(!da) return 1;  // unknown release dates sink to the bottom
       if(!db) return -1;
-      return new Date(db) - new Date(da); // newest first
+      const newestFirst = new Date(db) - new Date(da);
+      return releaseSortDirection === 'newest' ? newestFirst : -newestFirst;
     });
   } else if(sortMode === 'rating'){
     // highest of YOUR OWN rating first; unrated titles sink to the bottom
@@ -1609,10 +1611,15 @@ document.querySelectorAll('.sort-btn').forEach(btn=>{
       sortDirection = sortDirection === 'recent' ? 'longago' : 'recent';
     } else if(mode === 'watched-date'){
       sortDirection = 'recent';
+    } else if(mode === 'release' && sortMode === 'release'){
+      releaseSortDirection = releaseSortDirection === 'newest' ? 'oldest' : 'newest';
+    } else if(mode === 'release'){
+      releaseSortDirection = 'newest';
     }
     sortMode = mode;
     document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
     updateSortDirIndicator();
+    updateReleaseSortDirIndicator();
     render();
   });
 });
@@ -1625,7 +1632,17 @@ function updateSortDirIndicator(){
     ? 'showing most-recently watched first — click again to flip'
     : 'showing longest-since-watched first — click again to flip';
 }
+function updateReleaseSortDirIndicator(){
+  const label = document.querySelector('.sort-btn[data-sort="release"]');
+  const arrow = document.getElementById('release-sort-dir-indicator');
+  if(!label || !arrow) return;
+  arrow.textContent = releaseSortDirection === 'newest' ? '↓' : '↑';
+  label.title = releaseSortDirection === 'newest'
+    ? 'showing newest releases first — click again to flip'
+    : 'showing oldest releases first — click again to flip';
+}
 updateSortDirIndicator();
+updateReleaseSortDirIndicator();
 document.getElementById('add-btn').addEventListener('click', addMovie);
 document.getElementById('migrate-guest-btn').addEventListener('click', migrateGuestDataToAccount);
 document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
