@@ -1057,6 +1057,20 @@ async function tmdbFranchiseRows(title, genre, existingTitles){
   return {rows, note: ` + ${rows.length} franchise title${rows.length===1?'':'s'} from "${coll.name}"`};
 }
 
+// background fetch loops (posters/release dates/streaming) used to call render()
+// once per item every ~120ms, which fully rebuilds the grid's DOM — destroying
+// and recreating whichever card the mouse happened to be over, which retriggers
+// :hover on the fresh node and produces a visible grow/shrink flicker loop while
+// a batch is in progress. scheduleRender() batches those into far fewer rebuilds.
+let renderScheduleTimer = null;
+function scheduleRender(){
+  if(renderScheduleTimer) return; // a render's already queued — let it catch this update too
+  renderScheduleTimer = setTimeout(()=>{
+    renderScheduleTimer = null;
+    render();
+  }, 600);
+}
+
 async function fetchAllPosters(){
   if(fetchingPosters) return;
 
@@ -1077,10 +1091,11 @@ async function fetchAllPosters(){
       m.image = url; // reflect locally
       sb.from('movies').update({image:url}).eq('id', m.id).then(()=>{}); // persist, fire-and-forget
     }
-    render();
+    scheduleRender();
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
   }
   fetchingPosters = false;
+  render(); // flush — make sure the final item shows immediately, not stuck in a pending batch
 }
 
 async function fetchOneStreamingInfo(title, apiKey){
@@ -1122,10 +1137,11 @@ async function fetchAllReleaseDates(){
     }
     releaseDateCache[m.title] = (match && match.release_date) || '';
     saveReleaseDateCache();
-    if(sortMode === 'release') render();
+    if(sortMode === 'release') scheduleRender();
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
   }
   fetchingReleaseDates = false;
+  if(sortMode === 'release') render(); // flush the final item immediately
 }
 
 async function fetchAllStreaming(){
@@ -1144,10 +1160,11 @@ async function fetchAllStreaming(){
     }
     streamingCache[streamCacheKey(m.title)] = info;
     saveStreamingCache();
-    if(showStreaming) render();
+    if(showStreaming) scheduleRender();
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
   }
   fetchingStreaming = false;
+  if(showStreaming) render(); // flush the final item immediately
 }
 
 function applyTheme(i, opts={}){
