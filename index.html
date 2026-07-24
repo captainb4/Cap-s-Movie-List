@@ -243,6 +243,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       <div class="panel-title">THEME</div>
       <div class="panel-content">
         <div class="scheme-grid" id="scheme-grid"></div>
+        <div class="add-status" style="margin-top:6px">signed in? your theme follows your account across devices. otherwise it's remembered on this device only.</div>
       </div>
     </div>
   </div>
@@ -386,6 +387,9 @@ function authEmailToUsername(email){ return (email || '').split('@')[0]; }
 // admin status now lives in the "profiles" table (is_admin column) instead of
 // being hardcoded to a username — fetched fresh on login, see loadUserProfile()
 let currentIsAdmin = false;
+// account-level theme preference, also stored on "profiles" (theme column, text — the theme's name).
+// falls back to per-device localStorage for guests or if that column hasn't been added yet.
+let currentUserTheme = null;
 function isAdmin(){ return !!currentUser && currentIsAdmin; }
 function canEditMovie(m){
   if(isAdmin()) return true;
@@ -393,10 +397,39 @@ function canEditMovie(m){
 }
 
 async function loadUserProfile(){
-  if(!currentUser){ currentIsAdmin = false; return; }
-  const { data, error } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).maybeSingle();
+  if(!currentUser){ currentIsAdmin = false; currentUserTheme = null; return; }
+  let { data, error } = await sb.from('profiles').select('is_admin, theme').eq('id', currentUser.id).maybeSingle();
+  if(error){
+    // "theme" column probably hasn't been added to the profiles table yet — retry
+    // without it so admin status still loads, and just skip account theme sync.
+    const fallback = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).maybeSingle();
+    data = fallback.data; error = fallback.error;
+    currentUserTheme = null;
+  } else {
+    currentUserTheme = (data && data.theme) || null;
+  }
   if(error){ console.error(error); currentIsAdmin = false; return; }
   currentIsAdmin = !!(data && data.is_admin);
+}
+
+// pushes the current theme choice to the signed-in user's profile row so it
+// follows them across devices. silently no-ops for guests or if the "theme"
+// column doesn't exist yet (see the migration note near the THEME panel html).
+async function saveThemeToAccount(themeName){
+  if(!currentUser) return;
+  try{
+    const { error } = await sb.from('profiles').update({ theme: themeName }).eq('id', currentUser.id);
+    if(error) console.error('theme sync to account failed — has the "theme" column been added to profiles?', error);
+  }catch(e){ console.error(e); }
+}
+
+// applies a theme's colors/fonts/etc from THEMES[i]. by default also persists the
+// choice to localStorage (always) and to the account (if signed in) — pass
+// {sync:false} when merely reflecting a value we just loaded FROM one of those places.
+function applyAccountThemeIfAny(){
+  if(!currentUser || !currentUserTheme) return;
+  const idx = THEMES.findIndex(t => t.name === currentUserTheme);
+  if(idx !== -1) applyTheme(idx, {sync:false});
 }
 
 function updateAccountUI(){
@@ -737,7 +770,7 @@ async function fetchAllStreaming(){
   fetchingStreaming = false;
 }
 
-function applyTheme(i){
+function applyTheme(i, opts={}){
   activeTheme = i;
   const t = {...TERMINAL_DEFAULTS, ...THEMES[i]};
   const root = document.documentElement.style;
@@ -762,6 +795,7 @@ function applyTheme(i){
   root.setProperty('--poster-text', t.posterText);
   try{ localStorage.setItem('capsMovieListTheme', String(i)); }catch(e){}
   document.querySelectorAll('.scheme-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  if(currentUser && opts.sync !== false) saveThemeToAccount(t.name);
 }
 
 function buildThemeGrid(){
@@ -1244,6 +1278,7 @@ initCollapsiblePanels();
   await loadMovies(); // always loads the shared catalog (titles/posters/genres) first
   if(currentUser){
     await Promise.all([loadUserStatus(), loadUserProfile()]); // personal watched/ratings + admin flag
+    applyAccountThemeIfAny(); // account theme (if set) wins over the per-device one
     render();
   }
 
@@ -1251,10 +1286,14 @@ initCollapsiblePanels();
     if(event === 'SIGNED_IN'){
       currentUser = session.user;
       updateAccountUI();
-      Promise.all([loadUserStatus(), loadUserProfile()]).then(render);
+      Promise.all([loadUserStatus(), loadUserProfile()]).then(()=>{
+        applyAccountThemeIfAny();
+        render();
+      });
     } else if(event === 'SIGNED_OUT'){
       currentUser = null;
       currentIsAdmin = false;
+      currentUserTheme = null;
       updateAccountUI();
       loadMovies(); // revert to the shared/guest view
     }
