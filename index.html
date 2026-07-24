@@ -35,12 +35,11 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
 .panel{border-bottom:1px solid var(--border);padding:14px 16px;transition:border-color .2s}
 .panel-title{font-family:'VT323',monospace;font-size:15px;color:var(--accent);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;transition:color .2s;cursor:pointer;user-select:none}
-.panel-title::before{content:'>';color:var(--muted)}
-.panel-chevron{margin-left:auto;font-size:12px;color:var(--muted);transition:transform .15s ease}
+.panel-title::before{content:'>';color:var(--muted);display:inline-block;transition:transform .15s ease;transform:rotate(90deg)}
+.panel.collapsed .panel-title::before{transform:rotate(0deg)}
 .panel-content{overflow:hidden}
 .panel.collapsed .panel-title{margin-bottom:0}
 .panel.collapsed .panel-content{display:none}
-.panel.collapsed .panel-chevron{transform:rotate(-90deg)}
 .genre-list{display:flex;flex-direction:column;gap:2px}
 .genre-item{display:flex;align-items:center;gap:8px;padding:7px 8px;cursor:pointer;border:1px solid transparent;border-radius:2px;transition:all .1s;font-size:11px;color:var(--muted)}
 .genre-item:hover{border-color:var(--border);color:var(--text);background:var(--surface2)}
@@ -174,7 +173,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 
   <div class="sidebar" id="sidebar">
     <div class="panel" id="account-panel" data-panel="account">
-      <div class="panel-title">ACCOUNT<span class="panel-chevron">▾</span></div>
+      <div class="panel-title">ACCOUNT</div>
       <div class="panel-content">
         <div id="account-logged-out">
           <div class="add-field">
@@ -199,7 +198,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       </div>
     </div>
     <div class="panel" data-panel="add-movie">
-      <div class="panel-title">ADD MOVIE'S<span class="panel-chevron">▾</span></div>
+      <div class="panel-title">ADD MOVIE'S</div>
       <div class="panel-content">
         <div id="add-movie-locked" class="add-status" style="margin-top:0">sign in above to add movies to the list.</div>
         <div id="add-movie-form" style="display:none">
@@ -228,13 +227,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       </div>
     </div>
     <div class="panel" data-panel="genres">
-      <div class="panel-title">GENRES<span class="panel-chevron">▾</span></div>
+      <div class="panel-title">GENRES</div>
       <div class="panel-content">
         <div class="genre-list" id="genre-list"></div>
       </div>
     </div>
     <div class="panel theme-panel" data-panel="theme">
-      <div class="panel-title">THEME<span class="panel-chevron">▾</span></div>
+      <div class="panel-title">THEME</div>
       <div class="panel-content">
         <div class="scheme-grid" id="scheme-grid"></div>
       </div>
