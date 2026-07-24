@@ -59,7 +59,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .main-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .main-title{font-family:var(--font-display);font-size:26px;color:var(--accent);letter-spacing:var(--tracking);text-transform:var(--heading-transform);transition:color .2s}
 .main-sub{font-size:11px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-min,180px),1fr));gap:var(--grid-gap,16px)}
+.grid.density-compact .card-title{font-size:10px}
+.grid.density-compact .poster-title{font-size:16px}
+.grid.density-compact .card-body{padding:7px 8px 8px;gap:5px}
+.grid.density-large .card-title{font-size:13px}
+.grid.density-large .poster-title{font-size:27px}
+.grid.density-large .card-body{padding:12px 14px 14px;gap:10px}
 .card{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;cursor:pointer;transform:scale(1);will-change:transform}
 .card.edit-mode{cursor:default}
 .card:hover{border-color:var(--card-color,var(--accent));transform:scale(1.035);box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2;position:relative}
@@ -184,12 +190,75 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .modal-stat-label{font-size:9px;color:var(--muted);letter-spacing:1px}
 .modal-stat-val{font-family:var(--font-display);font-size:18px;color:var(--text)}
 
+/* recently added */
+.recently-added-list{display:flex;flex-direction:column;gap:2px}
+.recent-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid transparent;border-radius:var(--radius);cursor:pointer;transition:all .1s;font-size:11px;color:var(--text)}
+.recent-item:hover{border-color:var(--border);background:var(--surface2)}
+.recent-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.recent-item-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-item-genre{font-size:9px;color:var(--muted);letter-spacing:.5px;flex-shrink:0}
+.recently-added-empty{font-size:10px;color:var(--muted);font-style:italic;padding:2px 0}
+
+/* card size / density toggle */
+.density-toggle{display:flex;gap:4px}
+.density-btn{flex:1;padding:7px 4px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font-display);font-size:12px;letter-spacing:.5px;cursor:pointer;border-radius:var(--radius);transition:all .1s}
+.density-btn:hover{color:var(--text)}
+.density-btn.active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, transparent)}
+
+/* main view toggle (all titles / movie nights) */
+.view-toggle{display:flex;gap:4px}
+.view-btn{flex:1;padding:7px 4px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font-display);font-size:12px;letter-spacing:.5px;cursor:pointer;border-radius:var(--radius);transition:all .1s;position:relative}
+.view-btn:hover{color:var(--text)}
+.view-btn.active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, transparent)}
+.upcoming-badge{display:inline-flex;align-items:center;justify-content:center;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);margin-left:5px;vertical-align:middle}
+
+/* movie nights calendar */
+.calendar-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.cal-nav-btn{padding:6px 12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font-display);font-size:16px;cursor:pointer;border-radius:var(--radius);transition:all .1s}
+.cal-nav-btn:hover{color:var(--accent);border-color:var(--accent)}
+.cal-month-label{font-family:var(--font-display);font-size:20px;color:var(--accent);letter-spacing:var(--tracking);min-width:190px;text-align:center}
+.cal-today-btn{margin-left:auto}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day-name{font-size:9px;color:var(--muted);letter-spacing:1px;text-align:center;padding-bottom:6px}
+.cal-day{min-height:82px;border:1px solid var(--border);border-radius:var(--radius);padding:6px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:3px;transition:all .1s;overflow:hidden}
+.cal-day:hover{border-color:var(--accent)}
+.cal-day.other-month{opacity:.25;cursor:default}
+.cal-day.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cal-day.past:not(.today){opacity:.6}
+.cal-day-num{font-family:var(--font-display);font-size:15px;color:var(--text);line-height:1}
+.cal-event-pill{font-size:8px;letter-spacing:.3px;color:var(--bg);background:var(--card-color,var(--accent));padding:2px 4px;border-radius:var(--radius);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-event-more{font-size:8px;color:var(--muted);letter-spacing:.3px}
+
+/* day / create-night modal content */
+.day-event-item{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:10px}
+.day-event-title{font-family:var(--font-display);font-size:18px;color:var(--accent);letter-spacing:1px}
+.day-event-meta{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.7}
+.day-event-meta a{color:var(--accent3)}
+.day-event-actions{display:flex;gap:6px;margin-top:10px}
+.day-event-actions .edit-delete-btn{margin-top:0}
+.form-group{margin-bottom:10px}
+.form-label{font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 9px;font-family:var(--font-mono);font-size:12px;outline:none;border-radius:var(--radius);transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.name-status{font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6;min-height:12px}
+.night-search-results{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:180px;overflow-y:auto}
+.night-search-result{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;color:var(--text)}
+.night-search-result:hover{border-color:var(--accent)}
+.night-search-result img{width:28px;height:42px;object-fit:cover;border-radius:2px;flex-shrink:0;background:var(--surface2)}
+.night-selected-movie{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--accent);border-radius:var(--radius);font-size:11px}
+.night-selected-movie img{width:28px;height:42px;object-fit:cover;border-radius:2px}
+.night-selected-movie .clear-selected{margin-left:auto;cursor:pointer;color:var(--muted);font-size:14px}
+.night-selected-movie .clear-selected:hover{color:var(--accent2)}
+
 @media(max-width:800px){
   .modal{max-width:100%}
   .layout{grid-template-columns:0 1fr}
   .layout:not(.sidebar-hidden){grid-template-columns:220px 1fr}
   .header-right{display:none}
   .search-wrap{max-width:none}
+  .calendar-grid{gap:3px}
+  .cal-day{min-height:56px;padding:3px}
+  .cal-month-label{min-width:0}
 }
 </style>
 </head>
@@ -237,6 +306,15 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         </div>
       </div>
     </div>
+    <div class="panel" data-panel="view">
+      <div class="panel-title">VIEW</div>
+      <div class="panel-content">
+        <div class="view-toggle" id="main-view-toggle">
+          <button class="view-btn active" data-view="browse">ALL TITLES</button>
+          <button class="view-btn" data-view="calendar">MOVIE NIGHTS<span class="upcoming-badge" id="upcoming-badge" style="display:none">0</span></button>
+        </div>
+      </div>
+    </div>
     <div class="panel" data-panel="add-movie">
       <div class="panel-title">ADD MOVIES</div>
       <div class="panel-content">
@@ -266,10 +344,26 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         </div>
       </div>
     </div>
+    <div class="panel" id="recently-added-panel" data-panel="recent">
+      <div class="panel-title">RECENTLY ADDED</div>
+      <div class="panel-content">
+        <div class="recently-added-list" id="recently-added-list"></div>
+      </div>
+    </div>
     <div class="panel" data-panel="genres">
       <div class="panel-title">GENRES</div>
       <div class="panel-content">
         <div class="genre-list" id="genre-list"></div>
+      </div>
+    </div>
+    <div class="panel" data-panel="density">
+      <div class="panel-title">CARD SIZE</div>
+      <div class="panel-content">
+        <div class="density-toggle" id="density-toggle">
+          <button class="density-btn" data-density="compact">COMPACT</button>
+          <button class="density-btn active" data-density="comfortable">COMFORTABLE</button>
+          <button class="density-btn" data-density="large">LARGE</button>
+        </div>
       </div>
     </div>
     <div class="panel" data-panel="region">
@@ -289,29 +383,99 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   </div>
 
   <div class="main">
-    <div class="main-head">
-      <div class="main-title" id="main-title">ALL TITLES</div>
-      <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
-      <div class="filter-row">
-        <button class="filter-btn active" data-filter="all">ALL</button>
-        <button class="filter-btn" data-filter="watched">WATCHED</button>
-        <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
-        <button class="filter-btn" id="random-btn" title="pick a random movie from the current view">🎲 RANDOM</button>
+    <div id="browse-view">
+      <div class="main-head">
+        <div class="main-title" id="main-title">ALL TITLES</div>
+        <div class="main-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">connecting...</span></div>
+        <div class="filter-row">
+          <button class="filter-btn active" data-filter="all">ALL</button>
+          <button class="filter-btn" data-filter="watched">WATCHED</button>
+          <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
+          <button class="filter-btn" id="random-btn" title="pick a random movie from the current view">🎲 RANDOM</button>
+        </div>
+        <div class="sort-row">
+          <span class="sort-label">SORT:</span>
+          <button class="sort-btn active" data-sort="default">DEFAULT</button>
+          <button class="sort-btn" data-sort="watched-date">RECENTLY WATCHED <span class="sort-dir" id="sort-dir-indicator">↓</span></button>
+          <button class="sort-btn" data-sort="release">RELEASE DATE <span class="sort-dir" id="release-sort-dir-indicator">↓</span></button>
+          <button class="sort-btn" data-sort="rating">MY RATING</button>
+          <button class="sort-btn" data-sort="group-rating">GROUP RATING</button>
+          <button class="sort-btn" data-sort="recommended" title="unwatched titles picked based on your ratings and the group's"><span class="sort-dir" style="margin-left:0;margin-right:2px">★</span>RECOMMENDED</button>
+        </div>
       </div>
-      <div class="sort-row">
-        <span class="sort-label">SORT:</span>
-        <button class="sort-btn active" data-sort="default">DEFAULT</button>
-        <button class="sort-btn" data-sort="watched-date">RECENTLY WATCHED <span class="sort-dir" id="sort-dir-indicator">↓</span></button>
-        <button class="sort-btn" data-sort="release">RELEASE DATE <span class="sort-dir" id="release-sort-dir-indicator">↓</span></button>
-        <button class="sort-btn" data-sort="rating">MY RATING</button>
-        <button class="sort-btn" data-sort="group-rating">GROUP RATING</button>
-        <button class="sort-btn" data-sort="recommended" title="unwatched titles picked based on your ratings and the group's"><span class="sort-dir" style="margin-left:0;margin-right:2px">★</span>RECOMMENDED</button>
-      </div>
+      <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
+      <div class="grid" id="grid" style="display:none"></div>
+      <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
+      <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream, sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. Pick your country from the STREAMING REGION dropdown in the sidebar to control which region's availability is shown — it's saved locally on this device only, just like the theme, and nothing about you is looked up to set it. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites. "★ RECOMMENDED" sorts unwatched titles by a blend of genres you've rated highly and the group's average rating, and shows a MATCH % with the reason on each card — rate more titles for better picks.</div>
     </div>
-    <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
-    <div class="grid" id="grid" style="display:none"></div>
-    <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream, sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. Pick your country from the STREAMING REGION dropdown in the sidebar to control which region's availability is shown — it's saved locally on this device only, just like the theme, and nothing about you is looked up to set it. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites. "★ RECOMMENDED" sorts unwatched titles by a blend of genres you've rated highly and the group's average rating, and shows a MATCH % with the reason on each card — rate more titles for better picks.</div>
+
+    <div id="calendar-view" style="display:none">
+      <div class="main-head">
+        <div class="main-title">MOVIE NIGHTS</div>
+      </div>
+      <div class="calendar-header">
+        <button class="cal-nav-btn" id="cal-prev-btn">‹</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="cal-nav-btn" id="cal-next-btn">›</button>
+        <button class="filter-btn cal-today-btn" id="cal-today-btn">TODAY</button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="empty-msg" id="calendar-empty" style="display:none">-- COULD NOT LOAD MOVIE NIGHTS --</div>
+      <div class="footer-note">Click any day to see or schedule a movie night. Anyone signed in can create one — search TMDB for the movie, pick a date, and optionally add a description or a Discord link for the group to join. Events are visible to everyone on the shared list.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Day detail modal (calendar) -->
+<div class="modal-overlay" id="day-overlay">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" id="day-close">✕</button>
+    <div class="modal-body" style="padding:20px">
+      <div class="modal-title" id="day-modal-title" style="margin-bottom:14px"></div>
+      <div id="day-events-list"></div>
+      <button class="add-btn" id="day-create-btn" style="display:none">＋ SCHEDULE A MOVIE NIGHT</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create movie night modal -->
+<div class="modal-overlay" id="create-night-overlay">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" id="create-night-close">✕</button>
+    <div class="modal-body" style="padding:20px">
+      <div class="modal-title" style="margin-bottom:14px">SCHEDULE MOVIE NIGHT</div>
+      <div class="form-group">
+        <span class="form-label">SEARCH MOVIE (TMDB, optional)</span>
+        <input type="text" class="form-input" id="night-movie-search" placeholder="type a movie title…">
+        <div id="night-search-results" class="night-search-results"></div>
+      </div>
+      <div class="form-group" id="night-selected-group" style="display:none">
+        <span class="form-label">SELECTED MOVIE</span>
+        <div id="night-selected-movie" class="night-selected-movie"></div>
+      </div>
+      <div class="form-group">
+        <span class="form-label">TITLE</span>
+        <input type="text" class="form-input" id="night-title" placeholder="movie title…">
+      </div>
+      <div class="form-group">
+        <span class="form-label">DATE</span>
+        <input type="date" class="form-input" id="night-date">
+      </div>
+      <div class="form-group">
+        <span class="form-label">TIME (optional)</span>
+        <input type="time" class="form-input" id="night-time">
+      </div>
+      <div class="form-group">
+        <span class="form-label">DESCRIPTION (optional)</span>
+        <input type="text" class="form-input" id="night-description" placeholder="e.g. bring snacks!">
+      </div>
+      <div class="form-group">
+        <span class="form-label">DISCORD LINK (optional)</span>
+        <input type="text" class="form-input" id="night-discord" placeholder="https://discord.gg/…">
+      </div>
+      <div class="name-status" id="night-status"></div>
+      <button class="add-btn" id="night-submit">CREATE EVENT</button>
+    </div>
   </div>
 </div>
 
@@ -416,6 +580,15 @@ let query = '';
 let activeTheme = 0;
 let editMode = false;
 let currentUser = null;
+let density = 'comfortable'; // 'compact' | 'comfortable' | 'large' — see CARD SIZE panel
+let mainView = 'browse'; // 'browse' | 'calendar'
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth(); // 0-11
+let movieNights = [];
+let movieNightsLoaded = false;
+let nightSelectedMovie = null; // {id, title, poster, year} chosen from TMDB search, or null for free-typed title
+let activeDayDate = null; // 'YYYY-MM-DD' currently open in the day modal
+let nightSearchDebounce = null;
 
 // old title -> cleaned-up genre. Applied once per row on load to migrate
 // existing Supabase rows without needing manual SQL edits.
@@ -445,6 +618,10 @@ function isAdmin(){ return !!currentUser && currentIsAdmin; }
 function canEditMovie(m){
   if(isAdmin()) return true;
   return !!currentUser && !!m.added_by && String(m.added_by) === String(currentUser.id);
+}
+function canEditNight(n){
+  if(isAdmin()) return true;
+  return !!currentUser && !!n.created_by && String(n.created_by) === String(currentUser.id);
 }
 
 async function loadUserProfile(){
@@ -946,6 +1123,7 @@ function safeLocalStorageSet(key, val){
 }
 
 // ---- collapsible sidebar panels ----
+const LS_DENSITY = 'capsMovieList_density'; // card size preference, per-device only
 const LS_COLLAPSED_PANELS = 'capsMovieList_collapsedPanels';
 let collapsedPanels = {};
 function loadCollapsedPanels(){
@@ -966,6 +1144,29 @@ function applyPanelCollapseState(){
   const genresOpen = !!genresPanel && !genresPanel.classList.contains('collapsed');
   document.getElementById('sidebar').classList.toggle('genres-open', genresOpen);
 }
+const DENSITY_SETTINGS = {
+  compact:     { min:'130px', gap:'10px' },
+  comfortable: { min:'180px', gap:'16px' },
+  large:       { min:'230px', gap:'20px' }
+};
+function applyDensity(d, opts={}){
+  if(!DENSITY_SETTINGS[d]) d = 'comfortable';
+  density = d;
+  const grid = document.getElementById('grid');
+  const s = DENSITY_SETTINGS[d];
+  grid.style.setProperty('--card-min', s.min);
+  grid.style.setProperty('--grid-gap', s.gap);
+  grid.classList.remove('density-compact', 'density-large');
+  if(d === 'compact') grid.classList.add('density-compact');
+  if(d === 'large') grid.classList.add('density-large');
+  document.querySelectorAll('.density-btn').forEach(b=>b.classList.toggle('active', b.dataset.density === d));
+  if(opts.save !== false) safeLocalStorageSet(LS_DENSITY, d);
+}
+function loadDensity(){
+  const saved = safeLocalStorageGet(LS_DENSITY);
+  applyDensity(saved && DENSITY_SETTINGS[saved] ? saved : 'comfortable', {save:false});
+}
+
 function initCollapsiblePanels(){
   loadCollapsedPanels();
   applyPanelCollapseState();
@@ -1024,6 +1225,20 @@ async function tmdbGetMovieDetails(id, apiKey){
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}`);
   if(!res.ok) throw new Error('tmdb error ' + res.status);
   return res.json();
+}
+
+async function tmdbSearchMovies(q, apiKey){
+  if(!q || !q.trim()) return [];
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(q.trim())}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('tmdb error ' + res.status);
+  const data = await res.json();
+  return (data.results || []).slice(0, 6).map(r=>({
+    id: r.id,
+    title: r.title,
+    year: r.release_date ? r.release_date.slice(0,4) : '',
+    poster: r.poster_path ? `https://image.tmdb.org/t/p/w92${r.poster_path}` : ''
+  }));
 }
 
 async function tmdbGetCollection(collectionId, apiKey){
@@ -1232,6 +1447,27 @@ function buildGenreList(){
   datalist.innerHTML = genres.map(g=>`<option value="${escapeHtml(g)}">`).join('');
 }
 
+// shows the most recently added titles (movies are loaded ordered by id
+// ascending, so the tail of the array is the newest — no extra query needed)
+function renderRecentlyAdded(){
+  const wrap = document.getElementById('recently-added-list');
+  if(!wrap) return;
+  if(!movies.length){ wrap.innerHTML = '<div class="recently-added-empty">nothing added yet</div>'; return; }
+  const recent = movies.slice(-6).reverse();
+  wrap.innerHTML = recent.map(m=>{
+    const cleanTitle = escapeHtml(m.title.replace(/\*\(.*?\)\*/g,'').trim());
+    const color = genreColors[m.genre] || '#aaff44';
+    return `<div class="recent-item" data-id="${m.id}" title="${cleanTitle}">
+      <span class="recent-item-dot" style="background:${color}"></span>
+      <span class="recent-item-title">${cleanTitle}</span>
+      <span class="recent-item-genre">${escapeHtml(m.genre || '')}</span>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.recent-item').forEach(el=>{
+    el.addEventListener('click', ()=>openMovieModal(parseInt(el.dataset.id, 10)));
+  });
+}
+
 function selectGenre(g){
   activeGenre = g;
   document.querySelectorAll('.genre-item').forEach(el=>el.classList.toggle('active', el.dataset.genre === g));
@@ -1307,6 +1543,7 @@ function recommendationScore(m, affinity){
 }
 
 function render(){
+  renderRecentlyAdded();
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   let filtered = getFilteredMovies();
@@ -1703,6 +1940,286 @@ function pickRandomMovie(){
   }
 }
 
+// ---- movie nights calendar ----
+// Backed by a "movie_nights" table in the same Supabase project:
+//   create table movie_nights (
+//     id bigint generated always as identity primary key,
+//     title text not null,
+//     tmdb_id integer,
+//     poster text,
+//     event_date date not null,
+//     event_time text,
+//     description text,
+//     discord_link text,
+//     created_by uuid references auth.users(id),
+//     created_at timestamptz default now()
+//   );
+// If that table doesn't exist yet, the calendar still renders — it just shows
+// an empty month and a status message explaining what to do.
+let movieNightsTableMissing = false;
+
+function switchMainView(view){
+  mainView = view;
+  document.getElementById('browse-view').style.display = view === 'browse' ? '' : 'none';
+  document.getElementById('calendar-view').style.display = view === 'calendar' ? '' : 'none';
+  document.querySelectorAll('#main-view-toggle .view-btn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
+  if(view === 'calendar' && !movieNightsLoaded) loadMovieNights();
+}
+
+async function loadMovieNights(){
+  try{
+    const { data, error } = await sb.from('movie_nights').select('*').order('event_date', {ascending:true});
+    if(error) throw error;
+    movieNights = data || [];
+    movieNightsLoaded = true;
+    movieNightsTableMissing = false;
+  }catch(err){
+    console.error(err);
+    movieNights = [];
+    movieNightsLoaded = true;
+    movieNightsTableMissing = true;
+  }
+  renderCalendar();
+  updateUpcomingBadge();
+}
+
+function nightsOnDate(dateStr){
+  return movieNights.filter(n => n.event_date === dateStr);
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function renderCalendar(){
+  const label = document.getElementById('cal-month-label');
+  const monthNames = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+  label.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+  ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach(d=>{
+    const el = document.createElement('div');
+    el.className = 'cal-day-name';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstOfMonth = new Date(calendarYear, calendarMonth, 1);
+  const startWeekday = firstOfMonth.getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0; i<startWeekday; i++){
+    const el = document.createElement('div');
+    el.className = 'cal-day other-month';
+    grid.appendChild(el);
+  }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    if(dateStr === today) el.classList.add('today');
+    else if(dateStr < today) el.classList.add('past');
+    el.dataset.date = dateStr;
+
+    const events = nightsOnDate(dateStr);
+    const pillsHtml = events.slice(0,3).map(n=>{
+      const color = genreColors[(movies.find(m=>m.title===n.title)||{}).genre] || '#aaff44';
+      return `<div class="cal-event-pill" style="--card-color:${color}">${escapeHtml(n.title)}</div>`;
+    }).join('');
+    const moreHtml = events.length > 3 ? `<div class="cal-event-more">+${events.length-3} more</div>` : '';
+
+    el.innerHTML = `<div class="cal-day-num">${day}</div>${pillsHtml}${moreHtml}`;
+    el.addEventListener('click', ()=>openDayModal(dateStr));
+    grid.appendChild(el);
+  }
+
+  const empty = document.getElementById('calendar-empty');
+  if(movieNightsTableMissing){
+    empty.style.display = 'block';
+    empty.textContent = '-- MOVIE NIGHTS TABLE NOT SET UP YET -- ask whoever manages the database to create the "movie_nights" table (see comment near the top of the script) --';
+  } else {
+    empty.style.display = 'none';
+  }
+}
+
+function updateUpcomingBadge(){
+  const badge = document.getElementById('upcoming-badge');
+  const today = todayStr();
+  const in7 = new Date(); in7.setDate(in7.getDate()+7);
+  const in7Str = in7.getFullYear() + '-' + String(in7.getMonth()+1).padStart(2,'0') + '-' + String(in7.getDate()).padStart(2,'0');
+  const count = movieNights.filter(n => n.event_date >= today && n.event_date <= in7Str).length;
+  if(count > 0){
+    badge.textContent = count;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openDayModal(dateStr){
+  activeDayDate = dateStr;
+  const [y,mo,d] = dateStr.split('-').map(Number);
+  const niceDate = new Date(y, mo-1, d).toLocaleDateString(undefined, {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('day-modal-title').textContent = niceDate;
+
+  const events = nightsOnDate(dateStr);
+  const list = document.getElementById('day-events-list');
+  if(!events.length){
+    list.innerHTML = '<div class="add-status" style="margin-top:0">no movie nights scheduled yet.</div>';
+  } else {
+    list.innerHTML = events.map(n=>{
+      const metaParts = [];
+      if(n.event_time) metaParts.push(escapeHtml(n.event_time));
+      if(n.description) metaParts.push(escapeHtml(n.description));
+      if(n.discord_link) metaParts.push(`<a href="${escapeHtml(n.discord_link)}" target="_blank" rel="noopener">join on discord →</a>`);
+      const deleteBtn = canEditNight(n) ? `<button class="edit-delete-btn" data-delete-night="${n.id}">DELETE</button>` : '';
+      return `<div class="day-event-item">
+        <div class="day-event-title">${escapeHtml(n.title)}</div>
+        ${metaParts.length ? `<div class="day-event-meta">${metaParts.join(' &middot; ')}</div>` : ''}
+        <div class="day-event-actions">${deleteBtn}</div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-delete-night]').forEach(btn=>{
+      btn.addEventListener('click', ()=>deleteMovieNight(parseInt(btn.dataset.deleteNight, 10)));
+    });
+  }
+
+  const createBtn = document.getElementById('day-create-btn');
+  createBtn.style.display = currentUser ? 'block' : 'none';
+  document.getElementById('day-overlay').classList.add('open');
+}
+function closeDayModal(){
+  document.getElementById('day-overlay').classList.remove('open');
+}
+
+function openCreateNightModal(){
+  nightSelectedMovie = null;
+  document.getElementById('night-movie-search').value = '';
+  document.getElementById('night-search-results').innerHTML = '';
+  document.getElementById('night-selected-group').style.display = 'none';
+  document.getElementById('night-title').value = '';
+  document.getElementById('night-date').value = activeDayDate || todayStr();
+  document.getElementById('night-time').value = '';
+  document.getElementById('night-description').value = '';
+  document.getElementById('night-discord').value = '';
+  document.getElementById('night-status').textContent = '';
+  closeDayModal();
+  document.getElementById('create-night-overlay').classList.add('open');
+}
+function closeCreateNightModal(){
+  document.getElementById('create-night-overlay').classList.remove('open');
+}
+
+document.getElementById('night-movie-search').addEventListener('input', e=>{
+  const q = e.target.value;
+  clearTimeout(nightSearchDebounce);
+  if(!q.trim()){ document.getElementById('night-search-results').innerHTML = ''; return; }
+  nightSearchDebounce = setTimeout(async ()=>{
+    try{
+      const results = await tmdbSearchMovies(q, TMDB_API_KEY);
+      const wrap = document.getElementById('night-search-results');
+      wrap.innerHTML = results.map(r=>`
+        <div class="night-search-result" data-id="${r.id}" data-title="${escapeHtml(r.title)}" data-poster="${escapeHtml(r.poster)}" data-year="${r.year}">
+          ${r.poster ? `<img src="${escapeHtml(r.poster)}" alt="">` : ''}
+          <span>${escapeHtml(r.title)}${r.year ? ` (${r.year})` : ''}</span>
+        </div>`).join('');
+      wrap.querySelectorAll('.night-search-result').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          nightSelectedMovie = { id: el.dataset.id, title: el.dataset.title, poster: el.dataset.poster, year: el.dataset.year };
+          document.getElementById('night-title').value = nightSelectedMovie.title;
+          renderSelectedNightMovie();
+          wrap.innerHTML = '';
+          document.getElementById('night-movie-search').value = '';
+        });
+      });
+    }catch(err){ console.error(err); }
+  }, 350);
+});
+function renderSelectedNightMovie(){
+  const group = document.getElementById('night-selected-group');
+  const wrap = document.getElementById('night-selected-movie');
+  if(!nightSelectedMovie){ group.style.display = 'none'; return; }
+  group.style.display = 'block';
+  wrap.innerHTML = `${nightSelectedMovie.poster ? `<img src="${escapeHtml(nightSelectedMovie.poster)}" alt="">` : ''}
+    <span>${escapeHtml(nightSelectedMovie.title)}${nightSelectedMovie.year ? ` (${nightSelectedMovie.year})` : ''}</span>
+    <span class="clear-selected" id="clear-selected-night">✕</span>`;
+  document.getElementById('clear-selected-night').addEventListener('click', ()=>{
+    nightSelectedMovie = null;
+    renderSelectedNightMovie();
+  });
+}
+
+async function submitCreateNight(){
+  const statusEl = document.getElementById('night-status');
+  if(!currentUser){ statusEl.textContent = 'sign in to schedule a movie night.'; return; }
+  const title = document.getElementById('night-title').value.trim() || (nightSelectedMovie ? nightSelectedMovie.title : '');
+  const date = document.getElementById('night-date').value;
+  if(!title){ statusEl.textContent = 'give it a movie title.'; return; }
+  if(!date){ statusEl.textContent = 'pick a date.'; return; }
+
+  const row = {
+    title,
+    tmdb_id: nightSelectedMovie ? parseInt(nightSelectedMovie.id, 10) : null,
+    poster: nightSelectedMovie ? nightSelectedMovie.poster : null,
+    event_date: date,
+    event_time: document.getElementById('night-time').value || null,
+    description: document.getElementById('night-description').value.trim() || null,
+    discord_link: document.getElementById('night-discord').value.trim() || null,
+    created_by: currentUser.id
+  };
+
+  statusEl.textContent = 'creating...';
+  const { error } = await sb.from('movie_nights').insert(row);
+  if(error){
+    console.error(error);
+    statusEl.textContent = 'could not create event — check console (the movie_nights table may not exist yet).';
+    return;
+  }
+  closeCreateNightModal();
+  await loadMovieNights();
+  openDayModal(date);
+}
+
+async function deleteMovieNight(id){
+  const n = movieNights.find(x=>x.id===id);
+  if(!n || !canEditNight(n)) return;
+  const { error } = await sb.from('movie_nights').delete().eq('id', id);
+  if(error){ console.error(error); return; }
+  await loadMovieNights();
+  if(activeDayDate) openDayModal(activeDayDate);
+}
+
+document.querySelectorAll('#main-view-toggle .view-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchMainView(btn.dataset.view));
+});
+document.getElementById('cal-prev-btn').addEventListener('click', ()=>{
+  calendarMonth--; if(calendarMonth < 0){ calendarMonth = 11; calendarYear--; }
+  renderCalendar();
+});
+document.getElementById('cal-next-btn').addEventListener('click', ()=>{
+  calendarMonth++; if(calendarMonth > 11){ calendarMonth = 0; calendarYear++; }
+  renderCalendar();
+});
+document.getElementById('cal-today-btn').addEventListener('click', ()=>{
+  const now = new Date();
+  calendarMonth = now.getMonth(); calendarYear = now.getFullYear();
+  renderCalendar();
+});
+document.getElementById('day-close').addEventListener('click', closeDayModal);
+document.getElementById('day-overlay').addEventListener('click', e=>{ if(e.target.id === 'day-overlay') closeDayModal(); });
+document.getElementById('day-create-btn').addEventListener('click', openCreateNightModal);
+document.getElementById('create-night-close').addEventListener('click', closeCreateNightModal);
+document.getElementById('create-night-overlay').addEventListener('click', e=>{ if(e.target.id === 'create-night-overlay') closeCreateNightModal(); });
+document.getElementById('night-submit').addEventListener('click', submitCreateNight);
+
+document.querySelectorAll('.density-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>applyDensity(btn.dataset.density));
+});
+
 document.getElementById('random-btn').addEventListener('click', pickRandomMovie);
 
 // clicking a card opens the "more info" modal — unless the click landed on one
@@ -1803,6 +2320,7 @@ loadReleaseDateCache();
 loadMovieDetailsCache();
 buildThemeGrid();
 initCollapsiblePanels();
+loadDensity();
 (function restoreTheme(){
   try{
     const saved = parseInt(localStorage.getItem('capsMovieListTheme'), 10);
