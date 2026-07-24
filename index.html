@@ -147,6 +147,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .sort-dir{display:inline-block;margin-left:2px;font-size:12px}
 .rating-row{display:flex;align-items:center;gap:6px;justify-content:space-between}
 .group-rating{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.3px;white-space:nowrap;cursor:default}
+.match-badge{font-family:var(--font-mono);font-size:9px;letter-spacing:.3px;color:var(--bg);background:var(--card-color,var(--accent));padding:3px 6px;border-radius:var(--radius);display:inline-block;width:fit-content}
 
 /* theme panel */
 .theme-panel{margin-top:0}
@@ -297,12 +298,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <button class="sort-btn" data-sort="release">RELEASE DATE <span class="sort-dir" id="release-sort-dir-indicator">↓</span></button>
         <button class="sort-btn" data-sort="rating">MY RATING</button>
         <button class="sort-btn" data-sort="group-rating">GROUP RATING</button>
+        <button class="sort-btn" data-sort="recommended" title="unwatched titles picked based on your ratings and the group's">★ RECOMMENDED</button>
       </div>
     </div>
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites. "★ RECOMMENDED" sorts unwatched titles by a blend of genres you've rated highly and the group's average rating, and shows a MATCH % with the reason on each card — rate more titles for better picks.</div>
   </div>
 </div>
 
@@ -1185,6 +1187,57 @@ function getFilteredMovies(){
   });
 }
 
+// ---- recommendations ----
+// Personal signal: which genres does THIS user tend to rate highly, based on
+// their own star ratings so far. Crowd signal: the "GROUP ★" average rating
+// across every account (from movie_public_ratings). We blend the two rather
+// than doing true user-to-user collaborative filtering, because ratings for
+// other individual accounts aren't exposed to the client (user_movie_status
+// is locked down per-user by design, for privacy) — only the pre-aggregated
+// group average is. That aggregate is still a genuine "what other people
+// liked" signal, just not personalized to users similar to you specifically.
+function computeGenreAffinity(){
+  const genreSum = {}, genreCount = {};
+  let totalSum = 0, totalCount = 0;
+  movies.forEach(m=>{
+    if(m.rating && m.rating > 0){
+      genreSum[m.genre] = (genreSum[m.genre] || 0) + m.rating;
+      genreCount[m.genre] = (genreCount[m.genre] || 0) + 1;
+      totalSum += m.rating;
+      totalCount++;
+    }
+  });
+  const genreAvg = {};
+  Object.keys(genreCount).forEach(g => { genreAvg[g] = genreSum[g] / genreCount[g]; });
+  return { genreAvg, overallAvg: totalCount ? totalSum / totalCount : null, totalCount };
+}
+
+function recommendationScore(m, affinity){
+  const hasGenreData = Object.prototype.hasOwnProperty.call(affinity.genreAvg, m.genre);
+  const personalRaw = hasGenreData ? affinity.genreAvg[m.genre] : affinity.overallAvg;
+  const personalScore = (personalRaw != null) ? personalRaw / 5 : null;
+  const crowdScore = (m.public_rating_count > 0) ? (m.public_rating / 5) : null;
+
+  let score, reason;
+  if(personalScore != null && crowdScore != null){
+    score = personalScore * 0.65 + crowdScore * 0.35;
+    reason = hasGenreData
+      ? `you rate ${m.genre.toLowerCase()} highly + it's a group favorite`
+      : `group favorite, close to your usual taste`;
+  } else if(personalScore != null){
+    score = personalScore;
+    reason = hasGenreData ? `you rate ${m.genre.toLowerCase()} highly` : `based on your overall taste so far`;
+  } else if(crowdScore != null){
+    score = crowdScore;
+    reason = `popular with the group`;
+  } else {
+    score = 0.5;
+    reason = `no ratings yet to go on — rate a few titles for better picks`;
+  }
+  m._matchReason = reason;
+  return score;
+}
+
 function render(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
@@ -1220,6 +1273,17 @@ function render(){
       if(rb !== ra) return rb - ra;
       return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
     });
+  } else if(sortMode === 'recommended'){
+    // unwatched titles only, ranked by a blend of "genres you rate highly"
+    // (personal) and "the group's average rating" (crowd) — see
+    // computeGenreAffinity()/recommendationScore() below.
+    filtered = filtered.filter(m => !m.watched);
+    const affinity = computeGenreAffinity();
+    filtered.forEach(m => { m._score = recommendationScore(m, affinity); });
+    filtered.sort((a,b)=>{
+      if(b._score !== a._score) return b._score - a._score;
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+    });
   } else {
     filtered.sort((a,b)=> a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
   }
@@ -1251,6 +1315,9 @@ function render(){
       : '';
     const watchedDateHtml = (sortMode !== 'default' && m.watched_at)
       ? `<div class="add-status" style="margin-top:0">watched ${new Date(m.watched_at).toLocaleDateString()}</div>`
+      : '';
+    const matchBadgeHtml = (sortMode === 'recommended' && typeof m._score === 'number')
+      ? `<span class="match-badge" title="${escapeHtml(m._matchReason || '')}">${Math.round(m._score*100)}% MATCH — ${escapeHtml(m._matchReason || '')}</span>`
       : '';
     let streamingHtml = '';
     if(showStreaming){
@@ -1290,6 +1357,7 @@ function render(){
         <button class="edit-delete-btn" data-id="${m.id}">✕ DELETE MOVIE</button>
       </div>
     ` : `
+      ${matchBadgeHtml}
       <div class="card-title">${escapeHtml(m.title)}</div>
       <div class="rating-row">
         <div class="stars">${starsHtml}</div>
