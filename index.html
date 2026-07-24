@@ -34,8 +34,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .layout.sidebar-hidden .sidebar{opacity:0;border-color:transparent;pointer-events:none}
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
 .panel{border-bottom:1px solid var(--border);padding:14px 16px;transition:border-color .2s}
-.panel-title{font-family:'VT323',monospace;font-size:15px;color:var(--accent);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;transition:color .2s}
+.panel-title{font-family:'VT323',monospace;font-size:15px;color:var(--accent);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;transition:color .2s;cursor:pointer;user-select:none}
 .panel-title::before{content:'>';color:var(--muted)}
+.panel-chevron{margin-left:auto;font-size:12px;color:var(--muted);transition:transform .15s ease}
+.panel-content{overflow:hidden}
+.panel.collapsed .panel-title{margin-bottom:0}
+.panel.collapsed .panel-content{display:none}
+.panel.collapsed .panel-chevron{transform:rotate(-90deg)}
 .genre-list{display:flex;flex-direction:column;gap:2px}
 .genre-item{display:flex;align-items:center;gap:8px;padding:7px 8px;cursor:pointer;border:1px solid transparent;border-radius:2px;transition:all .1s;font-size:11px;color:var(--muted)}
 .genre-item:hover{border-color:var(--border);color:var(--text);background:var(--surface2)}
@@ -136,6 +141,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 
 /* theme panel */
 .theme-panel{margin-top:auto}
+.sidebar.all-collapsed .theme-panel{margin-top:0}
 .scheme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .scheme-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .1s;background:var(--surface2);font-size:9px;color:var(--muted);letter-spacing:.5px}
 .scheme-btn:hover{color:var(--text);border-color:var(--border)}
@@ -167,63 +173,71 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
   </header>
 
   <div class="sidebar" id="sidebar">
-    <div class="panel" id="account-panel">
-      <div class="panel-title">ACCOUNT</div>
-      <div id="account-logged-out">
-        <div class="add-field">
-          <span class="add-label">USERNAME</span>
-          <input type="text" id="account-username" class="add-input" placeholder="letters, numbers, underscores" autocomplete="username">
+    <div class="panel" id="account-panel" data-panel="account">
+      <div class="panel-title">ACCOUNT<span class="panel-chevron">▾</span></div>
+      <div class="panel-content">
+        <div id="account-logged-out">
+          <div class="add-field">
+            <span class="add-label">USERNAME</span>
+            <input type="text" id="account-username" class="add-input" placeholder="letters, numbers, underscores" autocomplete="username">
+          </div>
+          <div class="add-field">
+            <span class="add-label">PASSWORD</span>
+            <input type="password" id="account-password" class="add-input" placeholder="min 6 characters" autocomplete="current-password">
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="add-btn" id="account-signup-btn" style="flex:1">SIGN UP</button>
+            <button class="add-btn" id="account-login-btn" style="flex:1">LOG IN</button>
+          </div>
+          <div class="add-status" id="account-status"></div>
         </div>
-        <div class="add-field">
-          <span class="add-label">PASSWORD</span>
-          <input type="password" id="account-password" class="add-input" placeholder="min 6 characters" autocomplete="current-password">
+        <div id="account-logged-in" style="display:none">
+          <div class="add-status" style="margin-top:0">signed in as <span id="account-username-display"></span></div>
+          <button class="add-btn" id="account-logout-btn">LOG OUT</button>
+          <div class="add-status">your watched status &amp; ratings now sync to your account instead of the shared list.</div>
         </div>
-        <div style="display:flex;gap:6px">
-          <button class="add-btn" id="account-signup-btn" style="flex:1">SIGN UP</button>
-          <button class="add-btn" id="account-login-btn" style="flex:1">LOG IN</button>
-        </div>
-        <div class="add-status" id="account-status"></div>
-      </div>
-      <div id="account-logged-in" style="display:none">
-        <div class="add-status" style="margin-top:0">signed in as <span id="account-username-display"></span></div>
-        <button class="add-btn" id="account-logout-btn">LOG OUT</button>
-        <div class="add-status">your watched status &amp; ratings now sync to your account instead of the shared list.</div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-title">+ ADD MOVIE</div>
-      <div id="add-movie-locked" class="add-status" style="margin-top:0">sign in above to add movies to the list.</div>
-      <div id="add-movie-form" style="display:none">
-        <div class="add-field">
-          <span class="add-label">TITLE</span>
-          <input type="text" id="add-title" class="add-input" placeholder="movie title...">
-        </div>
-        <div class="add-field">
-          <span class="add-label">GENRE</span>
-          <input type="text" id="add-genre" class="add-input" placeholder="e.g. ACTION (existing or new)" list="genre-options">
-          <datalist id="genre-options"></datalist>
-        </div>
-        <div class="add-field">
-          <span class="add-label">POSTER URL (optional)</span>
-          <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
-        </div>
-        <div class="add-field">
-          <label class="watched-toggle" for="add-franchise" style="cursor:pointer">
-            <input type="checkbox" id="add-franchise">
-            <span>ALSO ADD REST OF FRANCHISE (via TMDB)</span>
-          </label>
-        </div>
-        <button class="add-btn" id="add-btn">ADD TO LIST</button>
-        <div class="add-status" id="add-status"></div>
       </div>
     </div>
-    <div class="panel">
-      <div class="panel-title">GENRES</div>
-      <div class="genre-list" id="genre-list"></div>
+    <div class="panel" data-panel="add-movie">
+      <div class="panel-title">ADD MOVIE'S<span class="panel-chevron">▾</span></div>
+      <div class="panel-content">
+        <div id="add-movie-locked" class="add-status" style="margin-top:0">sign in above to add movies to the list.</div>
+        <div id="add-movie-form" style="display:none">
+          <div class="add-field">
+            <span class="add-label">TITLE</span>
+            <input type="text" id="add-title" class="add-input" placeholder="movie title...">
+          </div>
+          <div class="add-field">
+            <span class="add-label">GENRE</span>
+            <input type="text" id="add-genre" class="add-input" placeholder="e.g. ACTION (existing or new)" list="genre-options">
+            <datalist id="genre-options"></datalist>
+          </div>
+          <div class="add-field">
+            <span class="add-label">POSTER URL (optional)</span>
+            <input type="text" id="add-image" class="add-input" placeholder="leave blank to auto-fetch">
+          </div>
+          <div class="add-field">
+            <label class="watched-toggle" for="add-franchise" style="cursor:pointer">
+              <input type="checkbox" id="add-franchise">
+              <span>ALSO ADD REST OF FRANCHISE (via TMDB)</span>
+            </label>
+          </div>
+          <button class="add-btn" id="add-btn">ADD TO LIST</button>
+          <div class="add-status" id="add-status"></div>
+        </div>
+      </div>
     </div>
-    <div class="panel theme-panel">
-      <div class="panel-title">THEME</div>
-      <div class="scheme-grid" id="scheme-grid"></div>
+    <div class="panel" data-panel="genres">
+      <div class="panel-title">GENRES<span class="panel-chevron">▾</span></div>
+      <div class="panel-content">
+        <div class="genre-list" id="genre-list"></div>
+      </div>
+    </div>
+    <div class="panel theme-panel" data-panel="theme">
+      <div class="panel-title">THEME<span class="panel-chevron">▾</span></div>
+      <div class="panel-content">
+        <div class="scheme-grid" id="scheme-grid"></div>
+      </div>
     </div>
   </div>
 
@@ -236,7 +250,6 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <button class="filter-btn" data-filter="watched">WATCHED</button>
         <button class="filter-btn" data-filter="unwatched">UNWATCHED</button>
         <button class="filter-btn" id="random-btn" title="pick a random movie from the current view">🎲 RANDOM</button>
-        <button class="filter-btn" id="streaming-toggle" title="show where each movie is streaming (US, via TMDB/JustWatch)">📺 STREAMING</button>
       </div>
       <div class="sort-row">
         <span class="sort-label">SORT:</span>
@@ -249,7 +262,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched/ratings are shared publicly with anyone using this list. Toggle 📺 STREAMING to see where each title is available (US region); this data is sourced from JustWatch via TMDB and may take a moment to load the first time.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched/ratings are shared publicly with anyone using this list. Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time.</div>
   </div>
 </div>
 
@@ -414,7 +427,7 @@ const LS_STREAM_CACHE = 'capsMovieList_streamingCache';
 const STREAM_REGION = 'US';
 let streamingCache = {};
 let fetchingStreaming = false;
-let showStreaming = false;
+let showStreaming = true; // always shown now — no toggle
 
 function loadStreamingCache(){
   try{
@@ -446,6 +459,40 @@ function safeLocalStorageGet(key){
 }
 function safeLocalStorageSet(key, val){
   try{ localStorage.setItem(key, val); }catch(e){ /* unavailable — cache just won't persist between reloads */ }
+}
+
+// ---- collapsible sidebar panels ----
+const LS_COLLAPSED_PANELS = 'capsMovieList_collapsedPanels';
+let collapsedPanels = {};
+function loadCollapsedPanels(){
+  try{
+    const raw = safeLocalStorageGet(LS_COLLAPSED_PANELS);
+    collapsedPanels = raw ? JSON.parse(raw) : {};
+  }catch(e){ collapsedPanels = {}; }
+}
+function saveCollapsedPanels(){
+  safeLocalStorageSet(LS_COLLAPSED_PANELS, JSON.stringify(collapsedPanels));
+}
+function applyPanelCollapseState(){
+  const panels = document.querySelectorAll('.panel[data-panel]');
+  panels.forEach(panel=>{
+    panel.classList.toggle('collapsed', !!collapsedPanels[panel.dataset.panel]);
+  });
+  const allCollapsed = panels.length > 0 && Array.from(panels).every(p => p.classList.contains('collapsed'));
+  document.getElementById('sidebar').classList.toggle('all-collapsed', allCollapsed);
+}
+function initCollapsiblePanels(){
+  loadCollapsedPanels();
+  applyPanelCollapseState();
+  document.querySelectorAll('.panel[data-panel] > .panel-title').forEach(title=>{
+    title.addEventListener('click', ()=>{
+      const panel = title.closest('.panel');
+      const key = panel.dataset.panel;
+      collapsedPanels[key] = !collapsedPanels[key];
+      saveCollapsedPanels();
+      applyPanelCollapseState();
+    });
+  });
 }
 
 function loadPosterCache(){
@@ -896,6 +943,7 @@ async function loadMovies(){
     render();
     fetchAllPosters(); // runs quietly in the background, re-rendering as posters arrive
     fetchAllReleaseDates(); // same, for release-date sort + year badges
+    fetchAllStreaming(); // same, streaming availability is always shown now
   }catch(err){
     console.error(err);
     setSyncStatus('err', 'sync error — check console');
@@ -1029,6 +1077,7 @@ async function addMovie(){
   statusEl.textContent = `added "${title}"${franchiseNote}`;
   if(data.some(d=>!d.image)) fetchAllPosters();
   fetchAllReleaseDates();
+  fetchAllStreaming();
 }
 
 function pickRandomMovie(){
@@ -1075,13 +1124,6 @@ document.querySelectorAll('.filter-btn[data-filter]').forEach(btn=>{
     render();
   });
 });
-document.getElementById('streaming-toggle').addEventListener('click', ()=>{
-  showStreaming = !showStreaming;
-  const btn = document.getElementById('streaming-toggle');
-  btn.classList.toggle('active', showStreaming);
-  render();
-  if(showStreaming) fetchAllStreaming();
-});
 document.querySelectorAll('.sort-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     sortMode = btn.dataset.sort;
@@ -1101,6 +1143,7 @@ loadPosterCache();
 loadStreamingCache();
 loadReleaseDateCache();
 buildThemeGrid();
+initCollapsiblePanels();
 
 (async function init(){
   const { data: { session } } = await sb.auth.getSession();
