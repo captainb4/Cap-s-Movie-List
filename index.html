@@ -143,6 +143,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .sort-btn{padding:5px 10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--font-display);font-size:14px;letter-spacing:.5px;cursor:pointer;border-radius:var(--radius);transition:all .1s}
 .sort-btn:hover{color:var(--text)}
 .sort-btn.active{border-color:var(--accent3);color:var(--accent3);background:rgba(68,170,255,.08)}
+.sort-dir{display:inline-block;margin-left:2px;font-size:12px}
 .rating-row{display:flex;align-items:center;gap:6px}
 
 /* theme panel */
@@ -261,8 +262,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       <div class="sort-row">
         <span class="sort-label">SORT:</span>
         <button class="sort-btn active" data-sort="default">DEFAULT</button>
-        <button class="sort-btn" data-sort="recent">RECENTLY WATCHED</button>
-        <button class="sort-btn" data-sort="longago">NOT WATCHED IN A WHILE</button>
+        <button class="sort-btn" data-sort="watched-date">RECENTLY WATCHED <span class="sort-dir" id="sort-dir-indicator">↓</span></button>
         <button class="sort-btn" data-sort="release">RELEASE DATE</button>
       </div>
     </div>
@@ -361,6 +361,7 @@ let genreColors = {};
 let activeGenre = 'ALL';
 let statusFilter = 'all';
 let sortMode = 'default';
+let sortDirection = 'recent'; // 'recent' = most-recently-watched first, 'longago' = watched longest ago first — only used when sortMode is 'watched-date'
 let query = '';
 let activeTheme = 0;
 let editMode = false;
@@ -863,11 +864,11 @@ function render(){
   grid.innerHTML = '';
   let filtered = getFilteredMovies();
 
-  if(sortMode === 'recent' || sortMode === 'longago'){
+  if(sortMode === 'watched-date'){
     filtered = filtered.filter(m => m.watched && m.watched_at);
     filtered.sort((a,b)=>{
       const diff = new Date(a.watched_at) - new Date(b.watched_at);
-      return sortMode === 'recent' ? -diff : diff;
+      return sortDirection === 'recent' ? -diff : diff;
     });
   } else if(sortMode === 'release'){
     filtered.sort((a,b)=>{
@@ -1245,11 +1246,29 @@ document.querySelectorAll('.filter-btn[data-filter]').forEach(btn=>{
 });
 document.querySelectorAll('.sort-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    sortMode = btn.dataset.sort;
+    const mode = btn.dataset.sort;
+    if(mode === 'watched-date' && sortMode === 'watched-date'){
+      // already showing this sort — clicking again reverses direction instead of no-op'ing
+      sortDirection = sortDirection === 'recent' ? 'longago' : 'recent';
+    } else if(mode === 'watched-date'){
+      sortDirection = 'recent';
+    }
+    sortMode = mode;
     document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    updateSortDirIndicator();
     render();
   });
 });
+function updateSortDirIndicator(){
+  const label = document.querySelector('.sort-btn[data-sort="watched-date"]');
+  const arrow = document.getElementById('sort-dir-indicator');
+  if(!label || !arrow) return;
+  arrow.textContent = sortDirection === 'recent' ? '↓' : '↑';
+  label.title = sortDirection === 'recent'
+    ? 'showing most-recently watched first — click again to flip'
+    : 'showing longest-since-watched first — click again to flip';
+}
+updateSortDirIndicator();
 document.getElementById('add-btn').addEventListener('click', addMovie);
 document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
 document.getElementById('account-login-btn').addEventListener('click', handleLogIn);
