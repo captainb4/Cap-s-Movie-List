@@ -1962,7 +1962,9 @@ function switchMainView(view){
   mainView = view;
   document.getElementById('browse-view').style.display = view === 'browse' ? '' : 'none';
   document.getElementById('calendar-view').style.display = view === 'calendar' ? '' : 'none';
-  document.getElementById('movie-nights-btn').classList.toggle('active', view === 'calendar');
+  const btn = document.getElementById('movie-nights-btn');
+  btn.classList.toggle('active', view === 'calendar');
+  btn.childNodes[0].nodeValue = view === 'calendar' ? 'BACK TO MOVIE LIST' : 'VIEW CALENDAR';
   if(view === 'calendar' && !movieNightsLoaded) loadMovieNights();
 }
 
@@ -2193,7 +2195,7 @@ async function deleteMovieNight(id){
   if(activeDayDate) openDayModal(activeDayDate);
 }
 
-document.getElementById('movie-nights-btn').addEventListener('click', ()=>switchMainView('calendar'));
+document.getElementById('movie-nights-btn').addEventListener('click', ()=>switchMainView(mainView === 'calendar' ? 'browse' : 'calendar'));
 document.getElementById('calendar-back-btn').addEventListener('click', ()=>switchMainView('browse'));
 document.getElementById('cal-prev-btn').addEventListener('click', ()=>{
   calendarMonth--; if(calendarMonth < 0){ calendarMonth = 11; calendarYear--; }
