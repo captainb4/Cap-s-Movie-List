@@ -302,6 +302,10 @@ function authEmailToUsername(email){ return (email || '').split('@')[0]; }
 // being hardcoded to a username — fetched fresh on login, see loadUserProfile()
 let currentIsAdmin = false;
 function isAdmin(){ return !!currentUser && currentIsAdmin; }
+function canEditMovie(m){
+  if(isAdmin()) return true;
+  return !!currentUser && !!m.added_by && String(m.added_by) === String(currentUser.id);
+}
 
 async function loadUserProfile(){
   if(!currentUser){ currentIsAdmin = false; return; }
@@ -764,7 +768,7 @@ function render(){
         }
       }
     }
-    const bodyHtml = editMode ? `
+    const bodyHtml = (editMode && canEditMovie(m)) ? `
       <div class="edit-panel">
         <span class="add-label">TITLE (include year in parens if you like)</span>
         <input type="text" class="add-input edit-field" data-id="${m.id}" data-field="title" value="${escapeHtml(m.title)}">
@@ -772,7 +776,7 @@ function render(){
         <input type="text" class="add-input edit-field" data-id="${m.id}" data-field="genre" value="${escapeHtml(m.genre)}" list="genre-options">
         <span class="add-label">POSTER URL</span>
         <input type="text" class="add-input edit-field" data-id="${m.id}" data-field="image" value="${escapeHtml(m.image||'')}" placeholder="paste poster URL, or leave blank to auto-fetch">
-        ${isAdmin() ? `<button class="edit-delete-btn" data-id="${m.id}">✕ DELETE MOVIE</button>` : `<div class="add-status" style="margin-top:8px">only the admin account can delete movies.</div>`}
+        <button class="edit-delete-btn" data-id="${m.id}">✕ DELETE MOVIE</button>
       </div>
     ` : `
       <div class="card-title">${escapeHtml(m.title)}</div>
@@ -805,21 +809,18 @@ function render(){
     grid.appendChild(card);
   });
 
-  if(editMode){
-    grid.querySelectorAll('.edit-field').forEach(inp=>{
-      inp.addEventListener('change', e=>{
-        updateMovieField(Number(e.target.dataset.id), e.target.dataset.field, e.target.value);
-      });
+  grid.querySelectorAll('.edit-field').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      updateMovieField(Number(e.target.dataset.id), e.target.dataset.field, e.target.value);
     });
-    grid.querySelectorAll('.edit-delete-btn').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const id = Number(e.target.dataset.id);
-        const m = movies.find(x=>x.id===id);
-        if(m && confirm(`Delete "${m.title}"? This can't be undone.`)) deleteMovie(id);
-      });
+  });
+  grid.querySelectorAll('.edit-delete-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const id = Number(e.target.dataset.id);
+      const m = movies.find(x=>x.id===id);
+      if(m && confirm(`Delete "${m.title}"? This can't be undone.`)) deleteMovie(id);
     });
-    return;
-  }
+  });
 
   grid.querySelectorAll('.watched-cb').forEach(cb=>{
     cb.addEventListener('change', e=>toggleWatched(Number(e.target.dataset.id), e.target.checked));
@@ -954,7 +955,8 @@ async function updateMovieField(id, field, rawValue){
 }
 
 async function deleteMovie(id){
-  if(!isAdmin()){ setSyncStatus('err','only the admin account can delete movies'); return; }
+  const m = movies.find(x=>x.id===id);
+  if(!m || !canEditMovie(m)){ setSyncStatus('err','only an admin or whoever added this movie can delete it'); return; }
   movies = movies.filter(x=>x.id!==id);
   refreshGenresFromMovies();
   render();
@@ -1003,6 +1005,8 @@ async function addMovie(){
     }
     statusEl.textContent = 'adding...';
   }
+
+  rowsToInsert = rowsToInsert.map(r => ({ ...r, added_by: currentUser.id }));
 
   const { data, error } = await sb.from('movies')
     .insert(rowsToInsert)
