@@ -60,7 +60,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .main-title{font-family:var(--font-display);font-size:26px;color:var(--accent);letter-spacing:var(--tracking);text-transform:var(--heading-transform);transition:color .2s}
 .main-sub{font-size:11px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
-.card{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;cursor:default;transform:scale(1);will-change:transform}
+.card{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;cursor:pointer;transform:scale(1);will-change:transform}
+.card.edit-mode{cursor:default}
 .card:hover{border-color:var(--card-color,var(--accent));transform:scale(1.035);box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2;position:relative}
 .poster{aspect-ratio:2/3;position:relative;overflow:hidden;background:var(--bg)}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;background:linear-gradient(160deg,var(--card-color,var(--accent)) 0%, var(--bg) 78%);}
@@ -156,7 +157,34 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .scheme-btn.active{border-color:var(--text);color:var(--text)}
 .swatch{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor}
 
+/* movie detail modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:40px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);max-width:640px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:modalPop .18s ease}
+@keyframes modalPop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-close{position:absolute;top:10px;right:10px;z-index:5;width:30px;height:30px;border:1px solid var(--border);background:rgba(13,15,11,.75);color:var(--text);font-family:var(--font-mono);font-size:16px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .1s}
+.modal-close:hover{border-color:var(--accent2);color:var(--accent2)}
+.modal-trailer-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden}
+.modal-trailer-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.modal-trailer-loading{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:var(--font-display);font-size:16px;letter-spacing:1px;background:var(--surface2)}
+.modal-trailer-fallback{margin:16px 20px 0}
+.modal-info{padding:18px 20px 22px;display:flex;flex-direction:column;gap:12px}
+.modal-title-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.modal-title{font-family:var(--font-display);font-size:24px;color:var(--accent);letter-spacing:var(--tracking);text-transform:var(--heading-transform)}
+.modal-tags{display:flex;gap:6px}
+.modal-rating-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.modal-rating-row .stars{gap:3px}
+.modal-rating-row .star{font-size:19px}
+.modal-watched-toggle{font-size:11px}
+.modal-overview{font-size:12px;line-height:1.65;color:var(--text)}
+.modal-overview.loading{color:var(--muted);font-style:italic}
+.modal-stats{display:flex;gap:22px;flex-wrap:wrap}
+.modal-stat{display:flex;flex-direction:column;gap:2px}
+.modal-stat-label{font-size:9px;color:var(--muted);letter-spacing:1px}
+.modal-stat-val{font-family:var(--font-display);font-size:18px;color:var(--text)}
+
 @media(max-width:800px){
+  .modal{max-width:100%}
   .layout{grid-template-columns:0 1fr}
   .layout:not(.sidebar-hidden){grid-template-columns:220px 1fr}
   .header-right{display:none}
@@ -275,6 +303,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
     <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="movie-modal-overlay">
+  <div class="modal">
+    <button class="modal-close" id="modal-close-btn">✕</button>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
@@ -493,6 +528,167 @@ async function loadPublicRatings(){
     m.public_rating_count = row ? row.rating_count : 0;
   });
   render();
+}
+
+// ---- movie detail modal (overview + trailer + runtime, TMDB "append_to_response=videos") ----
+const LS_DETAILS_CACHE = 'capsMovieList_movieDetailsCache';
+let movieDetailsCache = {};
+function loadMovieDetailsCache(){
+  try{ movieDetailsCache = JSON.parse(safeLocalStorageGet(LS_DETAILS_CACHE) || '{}'); }
+  catch(e){ movieDetailsCache = {}; }
+}
+function saveMovieDetailsCache(){
+  safeLocalStorageSet(LS_DETAILS_CACHE, JSON.stringify(movieDetailsCache));
+}
+
+// fetches (and caches) overview/runtime/TMDB score/trailer key for one title.
+// returns null if there's no TMDB match at all; caches that null too so we
+// don't keep retrying a miss every time the modal opens.
+async function fetchMovieDetails(title){
+  if(title in movieDetailsCache) return movieDetailsCache[title];
+  try{
+    const match = await tmdbFindMovie(title, TMDB_API_KEY);
+    if(!match){ movieDetailsCache[title] = null; saveMovieDetailsCache(); return null; }
+    const res = await fetch(`https://api.themoviedb.org/3/movie/${match.id}?api_key=${TMDB_API_KEY}&append_to_response=videos`);
+    if(!res.ok) throw new Error('tmdb error ' + res.status);
+    const d = await res.json();
+    const vids = (d.videos && d.videos.results) || [];
+    const trailer = vids.find(v=>v.site==='YouTube' && v.type==='Trailer' && v.official)
+      || vids.find(v=>v.site==='YouTube' && v.type==='Trailer')
+      || vids.find(v=>v.site==='YouTube');
+    const info = {
+      overview: d.overview || '',
+      runtime: d.runtime || null,
+      tmdbRating: (typeof d.vote_average === 'number' && d.vote_average > 0) ? d.vote_average : null,
+      trailerKey: trailer ? trailer.key : null
+    };
+    movieDetailsCache[title] = info;
+    saveMovieDetailsCache();
+    return info;
+  }catch(e){
+    console.error(e);
+    return null; // don't cache network failures — worth retrying next time the modal opens
+  }
+}
+
+let modalMovieId = null;
+
+function openMovieModal(id){
+  const m = movies.find(x=>x.id===id);
+  if(!m) return;
+  modalMovieId = id;
+  document.getElementById('movie-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderModal(); // paint immediately with whatever's already known (poster, ratings, streaming)
+  fetchMovieDetails(m.title).then(()=>{
+    if(modalMovieId === id) renderModal(); // fill in synopsis/trailer/runtime once TMDB replies
+  });
+}
+
+function closeMovieModal(){
+  modalMovieId = null;
+  document.getElementById('movie-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderModal(){
+  const m = movies.find(x=>x.id===modalMovieId);
+  const modalBody = document.getElementById('modal-body');
+  if(!m) return;
+
+  const cleanTitle = escapeHtml(m.title.replace(/\*\(.*?\)\*/g,'').trim());
+  const details = movieDetailsCache[m.title]; // undefined = still loading, null = no TMDB match found
+  const releaseDate = releaseDateCache[m.title];
+  const releaseYear = releaseDate ? releaseDate.slice(0,4) : '';
+  const rating = m.rating || 0;
+
+  const starsHtml = [1,2,3,4,5].map(n=>
+    `<span class="star modal-star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}">★</span>`
+  ).join('');
+
+  const groupRatingHtml = (m.public_rating_count > 0)
+    ? `<span class="group-rating">GROUP ★${Number(m.public_rating).toFixed(1)} (${m.public_rating_count})</span>`
+    : `<span class="group-rating" style="opacity:.6">no group ratings yet</span>`;
+
+  let trailerHtml;
+  if(details === undefined){
+    trailerHtml = `<div class="modal-trailer-loading">loading trailer...</div>`;
+  } else if(details && details.trailerKey){
+    trailerHtml = `<div class="modal-trailer-wrap"><iframe src="https://www.youtube.com/embed/${details.trailerKey}" title="${cleanTitle} trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+  } else {
+    trailerHtml = `<a class="add-btn modal-trailer-fallback" href="${trailerUrlFor(m.title)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">▶ SEARCH FOR TRAILER</a>`;
+  }
+
+  const overviewHtml = details === undefined
+    ? `<p class="modal-overview loading">fetching synopsis...</p>`
+    : (details && details.overview)
+      ? `<p class="modal-overview">${escapeHtml(details.overview)}</p>`
+      : `<p class="modal-overview" style="opacity:.6">no synopsis found for this title.</p>`;
+
+  const runtimeHtml = (details && details.runtime)
+    ? `<div class="modal-stat"><span class="modal-stat-label">RUNTIME</span><span class="modal-stat-val">${details.runtime} min</span></div>` : '';
+  const tmdbScoreHtml = (details && details.tmdbRating)
+    ? `<div class="modal-stat"><span class="modal-stat-label">TMDB SCORE</span><span class="modal-stat-val">${details.tmdbRating.toFixed(1)}/10</span></div>` : '';
+
+  let streamingHtml = '';
+  const info = streamingCache[m.title];
+  if(info === undefined){
+    streamingHtml = `<div class="streaming-row loading">checking availability...</div>`;
+  } else {
+    const hasFlat = info.flatrate && info.flatrate.length;
+    const hasRent = info.rent && info.rent.length;
+    const hasBuy = info.buy && info.buy.length;
+    const provs = hasFlat ? info.flatrate : (hasRent ? info.rent : info.buy);
+    if(provs && provs.length){
+      const label = hasFlat ? 'STREAMING:' : (hasRent ? 'RENT:' : 'BUY:');
+      const badges = provs.map(p => p.logo
+        ? `<img class="streaming-logo" src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.name)}" title="${escapeHtml(p.name)}">`
+        : `<span class="streaming-pill">${escapeHtml(p.name)}</span>`
+      ).join('');
+      streamingHtml = `<div class="streaming-row"><span class="streaming-label">${label}</span><div class="streaming-badges">${badges}</div></div>`;
+    } else {
+      streamingHtml = `<div class="streaming-row none">not available to stream (${STREAM_REGION})</div>`;
+    }
+  }
+
+  modalBody.innerHTML = `
+    ${trailerHtml}
+    <div class="modal-info">
+      <div class="modal-title-row">
+        <h2 class="modal-title">${cleanTitle}</h2>
+        <div class="modal-tags">
+          <span class="poster-genre-tag" style="position:static">${escapeHtml(m.genre)}</span>
+          ${releaseYear ? `<span class="poster-year-tag" style="position:static">${releaseYear}</span>` : ''}
+        </div>
+      </div>
+      <div class="modal-rating-row">
+        <div class="stars">${starsHtml}</div>
+        ${groupRatingHtml}
+      </div>
+      <label class="watched-toggle modal-watched-toggle${m.watched?' is-watched':''}">
+        <input type="checkbox" class="watched-cb modal-watched-cb" data-id="${m.id}" ${m.watched?'checked':''}>
+        WATCHED${(m.watched && m.watched_at) ? ` — ${new Date(m.watched_at).toLocaleDateString()}` : ''}
+      </label>
+      ${overviewHtml}
+      <div class="modal-stats">${runtimeHtml}${tmdbScoreHtml}</div>
+      ${streamingHtml}
+    </div>
+  `;
+
+  modalBody.querySelectorAll('.modal-star').forEach(s=>{
+    s.addEventListener('click', e=>{
+      const id = Number(e.target.dataset.id);
+      const val = Number(e.target.dataset.val);
+      const mm = movies.find(x=>x.id===id);
+      const newVal = (mm && mm.rating === val) ? 0 : val;
+      setRating(id, newVal).then(renderModal);
+    });
+  });
+  modalBody.querySelectorAll('.modal-watched-cb').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      toggleWatched(Number(e.target.dataset.id), e.target.checked).then(renderModal);
+    });
+  });
 }
 
 // ---- guest (no account) watched/rating ----
@@ -1365,6 +1561,25 @@ function pickRandomMovie(){
 
 document.getElementById('random-btn').addEventListener('click', pickRandomMovie);
 
+// clicking a card opens the "more info" modal — unless the click landed on one
+// of the card's own interactive bits (star, watched checkbox, trailer/streaming
+// links, or an edit-mode field), which should keep doing what they already do.
+document.getElementById('grid').addEventListener('click', e=>{
+  if(editMode) return; // edit mode has its own inline fields — the modal stays out of the way
+  if(e.target.closest('.star, .watched-toggle, .trailer-btn, .streaming-link, .edit-field, .edit-delete-btn')) return;
+  const card = e.target.closest('.card');
+  if(!card) return;
+  openMovieModal(Number(card.dataset.id));
+});
+document.getElementById('modal-close-btn').addEventListener('click', closeMovieModal);
+document.getElementById('movie-modal-overlay').addEventListener('click', e=>{
+  if(e.target.id === 'movie-modal-overlay') closeMovieModal();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeMovieModal();
+});
+
+
 document.getElementById('search').addEventListener('input', e=>{
   query = e.target.value;
   render();
@@ -1423,6 +1638,7 @@ document.getElementById('account-logout-btn').addEventListener('click', handleLo
 loadPosterCache();
 loadStreamingCache();
 loadReleaseDateCache();
+loadMovieDetailsCache();
 buildThemeGrid();
 initCollapsiblePanels();
 (function restoreTheme(){
