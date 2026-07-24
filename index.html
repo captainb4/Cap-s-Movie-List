@@ -144,7 +144,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
 .sort-btn:hover{color:var(--text)}
 .sort-btn.active{border-color:var(--accent3);color:var(--accent3);background:rgba(68,170,255,.08)}
 .sort-dir{display:inline-block;margin-left:2px;font-size:12px}
-.rating-row{display:flex;align-items:center;gap:6px}
+.rating-row{display:flex;align-items:center;gap:6px;justify-content:space-between}
+.group-rating{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.3px;white-space:nowrap;cursor:default}
 
 /* theme panel */
 .theme-panel{margin-top:auto}
@@ -202,6 +203,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
           <div class="add-status" style="margin-top:0">signed in as <span id="account-username-display"></span></div>
           <button class="add-btn" id="account-logout-btn">LOG OUT</button>
           <div class="add-status">your watched status &amp; ratings now sync to your account instead of the shared list.</div>
+          <button class="add-btn" id="migrate-guest-btn" style="display:none;margin-top:8px">IMPORT GUEST DATA FROM THIS DEVICE</button>
+          <div class="add-status" id="migrate-guest-status"></div>
         </div>
       </div>
     </div>
@@ -264,12 +267,14 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <button class="sort-btn active" data-sort="default">DEFAULT</button>
         <button class="sort-btn" data-sort="watched-date">RECENTLY WATCHED <span class="sort-dir" id="sort-dir-indicator">↓</span></button>
         <button class="sort-btn" data-sort="release">RELEASE DATE</button>
+        <button class="sort-btn" data-sort="rating">MY RATING</button>
+        <button class="sort-btn" data-sort="group-rating">GROUP RATING</button>
       </div>
     </div>
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched/ratings are shared publicly with anyone using this list. Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites.</div>
   </div>
 </div>
 
@@ -444,6 +449,7 @@ function updateAccountUI(){
     document.getElementById('account-username-display').textContent = authEmailToUsername(currentUser.email);
     addLockedEl.style.display = 'none';
     addFormEl.style.display = 'block';
+    checkAndShowMigrateButton();
   } else {
     loggedOutEl.style.display = 'block';
     loggedInEl.style.display = 'none';
@@ -469,6 +475,123 @@ async function loadUserStatus(){
     m.watched_at = row ? row.watched_at : null;
     m.rating = row ? (row.rating || null) : null;
   });
+}
+
+// ---- group/public rating (average rating for a title across every account, not just yours) ----
+// reads from the "movie_public_ratings" view — a plain aggregate (avg rating + count per
+// movie_id) that only exposes numbers, never who rated what or any per-user row. this view
+// has to be created once in the Supabase SQL editor (see setup note); if it doesn't exist yet
+// this just fails quietly and no group ratings show up.
+async function loadPublicRatings(){
+  const { data, error } = await sb.from('movie_public_ratings').select('*');
+  if(error){ return; } // view not set up yet — skip silently, everything else still works
+  const map = {};
+  (data || []).forEach(row => { map[row.movie_id] = row; });
+  movies.forEach(m=>{
+    const row = map[m.id];
+    m.public_rating = row ? Number(row.avg_rating) : null;
+    m.public_rating_count = row ? row.rating_count : 0;
+  });
+  render();
+}
+
+// ---- guest (no account) watched/rating ----
+// kept entirely on this device via localStorage instead of the shared "movies"
+// table, so a casual visitor without an account can't overwrite what everyone
+// else sees (or mass-troll the list). signing in switches to per-account storage.
+const GUEST_STATUS_KEY = 'capsMovieListGuestStatus';
+function loadGuestStatusCache(){
+  try{ return JSON.parse(localStorage.getItem(GUEST_STATUS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveGuestStatus(id, patch){
+  const cache = loadGuestStatusCache();
+  cache[id] = { ...(cache[id]||{}), ...patch };
+  try{ localStorage.setItem(GUEST_STATUS_KEY, JSON.stringify(cache)); }catch(e){}
+}
+// resets every movie to a clean unwatched/unrated baseline, then overlays
+// whatever this browser has stored locally. guests never read or write the
+// shared catalog's legacy watched/rating columns anymore.
+function applyGuestStatus(){
+  const cache = loadGuestStatusCache();
+  movies.forEach(m=>{
+    const saved = cache[m.id];
+    m.watched = saved ? !!saved.watched : false;
+    m.watched_at = saved ? (saved.watched_at || null) : null;
+    m.rating = saved ? (saved.rating || null) : null;
+  });
+}
+
+// shows/hides the "IMPORT GUEST DATA" button based on whether this browser has
+// any locally-stored guest watched/rating data left to bring over.
+function checkAndShowMigrateButton(){
+  const btn = document.getElementById('migrate-guest-btn');
+  if(!btn) return;
+  const hasGuestData = currentUser && Object.keys(loadGuestStatusCache()).length > 0;
+  btn.style.display = hasGuestData ? 'block' : 'none';
+  document.getElementById('migrate-guest-status').textContent = '';
+}
+
+// merges this browser's guest (localStorage) watched/rating data into the
+// signed-in account. never overwrites anything the account already has for a
+// title — it only fills in watched/rating where the account side is still
+// blank — so it's safe to click even if the account isn't brand new.
+async function migrateGuestDataToAccount(){
+  const btn = document.getElementById('migrate-guest-btn');
+  const statusEl = document.getElementById('migrate-guest-status');
+  if(!currentUser) return;
+
+  const cache = loadGuestStatusCache();
+  const ids = Object.keys(cache);
+  if(ids.length === 0){ checkAndShowMigrateButton(); return; }
+
+  if(!confirm(`Import watched/rating data for ${ids.length} title${ids.length===1?'':'s'} from this browser into your account? This only fills in gaps — it won't overwrite anything already saved on your account.`)) return;
+
+  btn.disabled = true;
+  statusEl.textContent = 'importing...';
+
+  const rows = [];
+  ids.forEach(idStr=>{
+    const id = Number(idStr);
+    const guest = cache[idStr];
+    const m = movies.find(x=>x.id===id);
+    if(!m) return; // title no longer exists in the shared catalog
+
+    const watched = m.watched || !!guest.watched;
+    const watched_at = m.watched_at || (guest.watched ? guest.watched_at : null) || null;
+    const rating = m.rating || guest.rating || null;
+
+    if(watched !== m.watched || rating !== m.rating){
+      rows.push({ user_id: currentUser.id, movie_id: id, watched, watched_at, rating });
+    }
+  });
+
+  if(rows.length === 0){
+    statusEl.textContent = 'nothing new to bring over — your account already has this data.';
+    try{ localStorage.removeItem(GUEST_STATUS_KEY); }catch(e){}
+    btn.style.display = 'none';
+    btn.disabled = false;
+    return;
+  }
+
+  const { error } = await sb.from('user_movie_status').upsert(rows, { onConflict: 'user_id,movie_id' });
+  if(error){
+    console.error(error);
+    statusEl.textContent = 'import failed — check console';
+    btn.disabled = false;
+    return;
+  }
+
+  rows.forEach(r=>{
+    const m = movies.find(x=>x.id===r.movie_id);
+    if(m){ m.watched = r.watched; m.watched_at = r.watched_at; m.rating = r.rating; }
+  });
+
+  try{ localStorage.removeItem(GUEST_STATUS_KEY); }catch(e){}
+  statusEl.textContent = `imported ${rows.length} title${rows.length===1?'':'s'}.`;
+  btn.style.display = 'none';
+  btn.disabled = false;
+  render();
 }
 
 async function handleSignUp(){
@@ -879,6 +1002,20 @@ function render(){
       if(!db) return -1;
       return new Date(db) - new Date(da); // newest first
     });
+  } else if(sortMode === 'rating'){
+    // highest of YOUR OWN rating first; unrated titles sink to the bottom
+    filtered.sort((a,b)=>{
+      const ra = a.rating || 0, rb = b.rating || 0;
+      if(rb !== ra) return rb - ra;
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+    });
+  } else if(sortMode === 'group-rating'){
+    // highest averaged rating ACROSS ALL ACCOUNTS first; titles nobody's rated yet sink to the bottom
+    filtered.sort((a,b)=>{
+      const ra = a.public_rating || 0, rb = b.public_rating || 0;
+      if(rb !== ra) return rb - ra;
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+    });
   } else {
     filtered.sort((a,b)=> a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
   }
@@ -905,6 +1042,9 @@ function render(){
     const starsHtml = [1,2,3,4,5].map(n=>
       `<span class="star${n<=rating?' filled':''}" data-id="${m.id}" data-val="${n}">★</span>`
     ).join('');
+    const groupRatingHtml = (m.public_rating_count > 0)
+      ? `<span class="group-rating" title="${m.public_rating_count} account${m.public_rating_count===1?'':'s'} rated this">GROUP ★${Number(m.public_rating).toFixed(1)}</span>`
+      : '';
     const watchedDateHtml = (sortMode !== 'default' && m.watched_at)
       ? `<div class="add-status" style="margin-top:0">watched ${new Date(m.watched_at).toLocaleDateString()}</div>`
       : '';
@@ -949,6 +1089,7 @@ function render(){
       <div class="card-title">${escapeHtml(m.title)}</div>
       <div class="rating-row">
         <div class="stars">${starsHtml}</div>
+        ${groupRatingHtml}
       </div>
       <div class="card-controls">
         <label class="watched-toggle${m.watched?' is-watched':''}">
@@ -1055,6 +1196,7 @@ async function loadMovies(){
     movies = data;
     await migrateGenres(); // one-time cleanup of any old genre labels
     refreshGenresFromMovies();
+    if(!currentUser) applyGuestStatus(); // account holders get their overlay from loadUserStatus() instead
 
     document.getElementById('load-status').style.display = 'none';
     document.getElementById('grid').style.display = 'grid';
@@ -1064,6 +1206,7 @@ async function loadMovies(){
     fetchAllPosters(); // runs quietly in the background, re-rendering as posters arrive
     fetchAllReleaseDates(); // same, for release-date sort + year badges
     fetchAllStreaming(); // same, streaming availability is always shown now
+    loadPublicRatings(); // same, cross-account average ratings
   }catch(err){
     console.error(err);
     setSyncStatus('err', 'sync error — check console');
@@ -1083,8 +1226,7 @@ async function toggleWatched(id, watched){
       .upsert({ user_id: currentUser.id, movie_id: id, watched, watched_at }, { onConflict: 'user_id,movie_id' });
     if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
   } else {
-    const { error } = await sb.from('movies').update({watched, watched_at}).eq('id', id);
-    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+    saveGuestStatus(id, { watched, watched_at });
   }
 }
 
@@ -1096,9 +1238,9 @@ async function setRating(id, rating){
     const { error } = await sb.from('user_movie_status')
       .upsert({ user_id: currentUser.id, movie_id: id, rating: rating || null }, { onConflict: 'user_id,movie_id' });
     if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+    else loadPublicRatings(); // this rating just moved the group average — refresh it
   } else {
-    const { error } = await sb.from('movies').update({rating: rating || null}).eq('id', id);
-    if(error){ console.error(error); setSyncStatus('err','save failed — check console'); }
+    saveGuestStatus(id, { rating: rating || null });
   }
 }
 
@@ -1270,6 +1412,7 @@ function updateSortDirIndicator(){
 }
 updateSortDirIndicator();
 document.getElementById('add-btn').addEventListener('click', addMovie);
+document.getElementById('migrate-guest-btn').addEventListener('click', migrateGuestDataToAccount);
 document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
 document.getElementById('account-login-btn').addEventListener('click', handleLogIn);
 document.getElementById('account-logout-btn').addEventListener('click', handleLogOut);
