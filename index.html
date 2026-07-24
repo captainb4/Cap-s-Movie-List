@@ -171,8 +171,8 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
       <div class="panel-title">ACCOUNT</div>
       <div id="account-logged-out">
         <div class="add-field">
-          <span class="add-label">EMAIL</span>
-          <input type="email" id="account-email" class="add-input" placeholder="you@example.com" autocomplete="email">
+          <span class="add-label">USERNAME</span>
+          <input type="text" id="account-username" class="add-input" placeholder="letters, numbers, underscores" autocomplete="username">
         </div>
         <div class="add-field">
           <span class="add-label">PASSWORD</span>
@@ -185,7 +185,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <div class="add-status" id="account-status"></div>
       </div>
       <div id="account-logged-in" style="display:none">
-        <div class="add-status" style="margin-top:0">signed in as <span id="account-email-display"></span></div>
+        <div class="add-status" style="margin-top:0">signed in as <span id="account-username-display"></span></div>
         <button class="add-btn" id="account-logout-btn">LOG OUT</button>
         <div class="add-status">your watched status &amp; ratings now sync to your account instead of the shared list.</div>
       </div>
@@ -287,13 +287,21 @@ const SUPABASE_KEY = 'sb_publishable_ZAwF4Uav1pAZMVaKAwcRXg_hT3wHBr3';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ---- accounts (per-user watched status + ratings, stored in the user_movie_status table) ----
+// Supabase Auth is email/password under the hood, so usernames are mapped to a
+// synthetic address (username@USERNAME_AUTH_DOMAIN) — this also means Supabase's
+// own unique-email constraint gives us free username uniqueness.
+const USERNAME_AUTH_DOMAIN = 'capsmovielist.local';
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+function usernameToAuthEmail(username){ return username.toLowerCase() + '@' + USERNAME_AUTH_DOMAIN; }
+function authEmailToUsername(email){ return (email || '').split('@')[0]; }
+
 function updateAccountUI(){
   const loggedOutEl = document.getElementById('account-logged-out');
   const loggedInEl = document.getElementById('account-logged-in');
   if(currentUser){
     loggedOutEl.style.display = 'none';
     loggedInEl.style.display = 'block';
-    document.getElementById('account-email-display').textContent = currentUser.email;
+    document.getElementById('account-username-display').textContent = authEmailToUsername(currentUser.email);
   } else {
     loggedOutEl.style.display = 'block';
     loggedInEl.style.display = 'none';
@@ -319,27 +327,36 @@ async function loadUserStatus(){
 }
 
 async function handleSignUp(){
-  const email = document.getElementById('account-email').value.trim();
+  const username = document.getElementById('account-username').value.trim();
   const password = document.getElementById('account-password').value;
   const statusEl = document.getElementById('account-status');
-  if(!email || !password){ statusEl.textContent = 'enter an email and password.'; return; }
+  if(!username || !password){ statusEl.textContent = 'enter a username and password.'; return; }
+  if(!USERNAME_RE.test(username)){ statusEl.textContent = 'username: 3-20 letters, numbers, or underscores only.'; return; }
   if(password.length < 6){ statusEl.textContent = 'password must be at least 6 characters.'; return; }
   statusEl.textContent = 'creating account...';
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if(error){ statusEl.textContent = 'error: ' + error.message; return; }
-  statusEl.textContent = data.session
-    ? ''
-    : 'account created — check your email to confirm it, then log in.';
+  const { data, error } = await sb.auth.signUp({ email: usernameToAuthEmail(username), password });
+  if(error){
+    statusEl.textContent = /already registered|already exists/i.test(error.message)
+      ? 'that username is taken.'
+      : 'error: ' + error.message;
+    return;
+  }
+  statusEl.textContent = data.session ? '' : 'account created — log in below.';
 }
 
 async function handleLogIn(){
-  const email = document.getElementById('account-email').value.trim();
+  const username = document.getElementById('account-username').value.trim();
   const password = document.getElementById('account-password').value;
   const statusEl = document.getElementById('account-status');
-  if(!email || !password){ statusEl.textContent = 'enter an email and password.'; return; }
+  if(!username || !password){ statusEl.textContent = 'enter a username and password.'; return; }
   statusEl.textContent = 'logging in...';
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ statusEl.textContent = 'error: ' + error.message; return; }
+  const { error } = await sb.auth.signInWithPassword({ email: usernameToAuthEmail(username), password });
+  if(error){
+    statusEl.textContent = /invalid login/i.test(error.message)
+      ? 'wrong username or password.'
+      : 'error: ' + error.message;
+    return;
+  }
   statusEl.textContent = '';
 }
 
@@ -1047,7 +1064,7 @@ document.getElementById('add-btn').addEventListener('click', addMovie);
 document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
 document.getElementById('account-login-btn').addEventListener('click', handleLogIn);
 document.getElementById('account-logout-btn').addEventListener('click', handleLogOut);
-[document.getElementById('account-email'), document.getElementById('account-password')].forEach(el=>{
+[document.getElementById('account-username'), document.getElementById('account-password')].forEach(el=>{
   el.addEventListener('keydown', e=>{ if(e.key === 'Enter') handleLogIn(); });
 });
 
