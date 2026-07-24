@@ -272,6 +272,13 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
         <div class="genre-list" id="genre-list"></div>
       </div>
     </div>
+    <div class="panel" data-panel="region">
+      <div class="panel-title">STREAMING REGION</div>
+      <div class="panel-content">
+        <select id="region-select" class="add-select"></select>
+        <div class="add-status" style="margin-top:6px">controls which country's streaming availability shows on each card. saved on this device only — nothing about you is looked up to set this.</div>
+      </div>
+    </div>
     <div class="panel theme-panel" data-panel="theme">
       <div class="panel-title">THEME</div>
       <div class="panel-content">
@@ -304,7 +311,7 @@ header{grid-column:1/-1;border-bottom:2px solid var(--border);background:var(--s
     <div id="load-status" class="load-msg">-- CONNECTING TO DATABASE --</div>
     <div class="grid" id="grid" style="display:none"></div>
     <div class="empty-msg" id="empty-msg" style="display:none">-- NO MATCHES FOUND --</div>
-    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream (US region), sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites. "★ RECOMMENDED" sorts unwatched titles by a blend of genres you've rated highly and the group's average rating, and shows a MATCH % with the reason on each card — rate more titles for better picks.</div>
+    <div class="footer-note">Poster art loads automatically from TMDB in the background, or set your own via the add-movie form. Click a title's checkbox to mark it watched, and click the stars to rate it. Sign in (see ACCOUNT in the sidebar) to have your watched status and ratings saved to your own account on the backend and follow you across devices — without an account, watched status and ratings are kept only in this browser (not shared with or visible to anyone else, and lost if you clear your browser data). Each card shows where it's available to stream, sourced from JustWatch via TMDB — this loads in the background and may take a moment to fill in the first time. Pick your country from the STREAMING REGION dropdown in the sidebar to control which region's availability is shown — it's saved locally on this device only, just like the theme, and nothing about you is looked up to set it. "GROUP ★" on a card is the average rating across every account that's rated it (not just yours) — a quick way to spot the group's favorites. "★ RECOMMENDED" sorts unwatched titles by a blend of genres you've rated highly and the group's average rating, and shows a MATCH % with the reason on each card — rate more titles for better picks.</div>
   </div>
 </div>
 
@@ -634,7 +641,7 @@ function renderModal(){
     ? `<div class="modal-stat"><span class="modal-stat-label">TMDB SCORE</span><span class="modal-stat-val">${details.tmdbRating.toFixed(1)}/10</span></div>` : '';
 
   let streamingHtml = '';
-  const info = streamingCache[m.title];
+  const info = streamingCache[streamCacheKey(m.title)];
   if(info === undefined){
     streamingHtml = `<div class="streaming-row loading">checking availability...</div>`;
   } else {
@@ -857,10 +864,54 @@ let fetchingPosters = false;
 
 // ---- streaming availability (TMDB watch/providers, data sourced from JustWatch) ----
 const LS_STREAM_CACHE = 'capsMovieList_streamingCache';
-const STREAM_REGION = 'US';
+const LS_STREAM_REGION = 'capsMovieList_streamRegion'; // your chosen region, stored locally — same pattern as the theme
+let STREAM_REGION = 'US'; // default until the person picks their own; cache keys are per-region so switching is safe
 let streamingCache = {};
 let fetchingStreaming = false;
 let showStreaming = true; // always shown now — no toggle
+
+// streaming availability is regional (JustWatch/TMDB data differs by country).
+// No IP lookup or auto-detection here — the region is just a plain local
+// preference (like the theme), picked from the REGION dropdown in the sidebar
+// and remembered on this device only. Nothing about the visitor is looked up
+// or sent anywhere for this.
+const STREAM_REGIONS = [
+  ['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],
+  ['NZ','New Zealand'],['IE','Ireland'],['DE','Germany'],['FR','France'],['ES','Spain'],
+  ['IT','Italy'],['NL','Netherlands'],['BE','Belgium'],['PT','Portugal'],['SE','Sweden'],
+  ['NO','Norway'],['DK','Denmark'],['FI','Finland'],['PL','Poland'],['AT','Austria'],
+  ['CH','Switzerland'],['GR','Greece'],['CZ','Czech Republic'],['HU','Hungary'],
+  ['RO','Romania'],['MX','Mexico'],['BR','Brazil'],['AR','Argentina'],['CL','Chile'],
+  ['CO','Colombia'],['IN','India'],['JP','Japan'],['KR','South Korea'],['SG','Singapore'],
+  ['MY','Malaysia'],['PH','Philippines'],['TH','Thailand'],['ID','Indonesia'],
+  ['VN','Vietnam'],['ZA','South Africa'],['AE','United Arab Emirates'],['TR','Turkey'],
+];
+
+function streamCacheKey(title){ return title + '::' + STREAM_REGION; }
+
+function loadStreamRegion(){
+  try{
+    const saved = localStorage.getItem(LS_STREAM_REGION);
+    if(saved && /^[A-Z]{2}$/.test(saved)) STREAM_REGION = saved;
+  }catch(e){}
+}
+
+function buildRegionSelect(){
+  const sel = document.getElementById('region-select');
+  if(!sel) return;
+  sel.innerHTML = STREAM_REGIONS.map(([code,name]) =>
+    `<option value="${code}"${code===STREAM_REGION?' selected':''}>${escapeHtml(name)} (${code})</option>`
+  ).join('');
+}
+
+function setStreamRegion(code){
+  const clean = (code || '').trim().toUpperCase();
+  if(!/^[A-Z]{2}$/.test(clean) || clean === STREAM_REGION) return;
+  STREAM_REGION = clean;
+  try{ localStorage.setItem(LS_STREAM_REGION, clean); }catch(e){}
+  render();
+  fetchAllStreaming(); // fetches fresh for the new region's cache keys; old region stays cached too
+}
 
 function loadStreamingCache(){
   try{
@@ -1080,7 +1131,7 @@ async function fetchAllReleaseDates(){
 async function fetchAllStreaming(){
   if(fetchingStreaming) return;
 
-  const toFetch = movies.filter(m => !(m.title in streamingCache));
+  const toFetch = movies.filter(m => !(streamCacheKey(m.title) in streamingCache));
   if(toFetch.length === 0) return;
 
   fetchingStreaming = true;
@@ -1091,7 +1142,7 @@ async function fetchAllStreaming(){
     }catch(e){
       break; // likely bad key or rate limit — stop quietly, whatever's cached stays usable
     }
-    streamingCache[m.title] = info;
+    streamingCache[streamCacheKey(m.title)] = info;
     saveStreamingCache();
     if(showStreaming) render();
     await new Promise(r=>setTimeout(r, 120)); // stay well under TMDB rate limits
@@ -1321,7 +1372,7 @@ function render(){
       : '';
     let streamingHtml = '';
     if(showStreaming){
-      const info = streamingCache[m.title];
+      const info = streamingCache[streamCacheKey(m.title)];
       if(info === undefined){
         streamingHtml = `<div class="streaming-row loading">checking availability...</div>`;
       } else {
@@ -1718,6 +1769,9 @@ function updateReleaseSortDirIndicator(){
 updateSortDirIndicator();
 updateReleaseSortDirIndicator();
 document.getElementById('add-btn').addEventListener('click', addMovie);
+document.getElementById('region-select').addEventListener('change', e=>{
+  setStreamRegion(e.target.value);
+});
 document.getElementById('migrate-guest-btn').addEventListener('click', migrateGuestDataToAccount);
 document.getElementById('account-signup-btn').addEventListener('click', handleSignUp);
 document.getElementById('account-login-btn').addEventListener('click', handleLogIn);
@@ -1738,6 +1792,8 @@ initCollapsiblePanels();
     if(!Number.isNaN(saved) && THEMES[saved]) applyTheme(saved);
   }catch(e){}
 })();
+loadStreamRegion(); // same pattern as theme — plain local preference, no lookups involved
+buildRegionSelect();
 
 (async function init(){
   const { data: { session } } = await sb.auth.getSession();
